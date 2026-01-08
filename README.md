@@ -81,6 +81,17 @@ smart_stocks/
 
 자세한 개발 가이드는 `prd.mdc` 파일을 참고하세요.
 
+## 🚀 배포
+
+Vercel 배포 가이드는 [DEPLOY.md](./DEPLOY.md)를 참고하세요.
+
+### 빠른 배포
+
+1. GitHub에 코드 푸시
+2. [Vercel](https://vercel.com)에서 프로젝트 연결
+3. Root Directory를 `frontend`로 설정
+4. 자동 배포 완료!
+
 ## 🔒 보안
 
 - API 키는 환경 변수로 관리
