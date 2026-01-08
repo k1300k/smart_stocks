@@ -43,3 +43,4 @@ frontend/.vite/
 # Misc
 .cache/
 .temp/
+.github/workflows/
