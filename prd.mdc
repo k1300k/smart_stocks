@@ -1,0 +1,813 @@
+---
+alwaysApply: true
+# Cursor AI용 마인드맵 기반 주식 포트폴리오 관리 서비스 PRD
+
+15년차 서비스 기획자로서 Cursor AI를 최대한 활용할 수 있도록 구조화된 PRD와 개발 가이드를 제공해드리겠습니다.
+
+## **1. 프로젝트 루트 파일: prd.mdc**
+
+```markdown
+---
+title: "MindStock - 마인드맵 기반 주식 포트폴리오 관리 서비스"
+description: "주식 포트폴리오를 마인드맵으로 시각화하여 직관적인 투자 관리를 지원하는 서비스"
+version: "1.0"
+author: "15년차 서비스 기획팀"
+created: "2024-01-08"
+tags: ["fintech", "portfolio", "mindmap", "visualization", "react", "d3js"]
+---
+
+# 🎯 프로젝트 핵심 목표
+
+## **비즈니스 목표**
+사용자의 주식 포트폴리오를 직관적인 마인드맵 형태로 시각화하여, 복잡한 투자 구조를 한눈에 파악하고 리스크를 관리할 수 있는 혁신적인 투자 관리 플랫폼을 구축합니다.
+
+## **핵심 문제 해결**
+- **포트폴리오 구조 파악의 어려움**: 섹터별, 테마별 편중도를 시각적으로 표현
+- **데이터 분산 문제**: 토스, 증권사 등에 흩어진 투자 데이터를 통합 관리
+- **정적인 분석 도구의 한계**: 탐색적 분석이 가능한 인터랙티브 인터페이스 제공
+
+## **현실적 제약사항 인식**
+⚠️ **중요**: 토스, 네이버 등 주요 핀테크 서비스는 개인 개발자에게 공식 API를 제공하지 않습니다.
+
+**대응 전략**:
+1. **Phase 1**: 수동 입력 + 한국투자증권 API 실시간 시세 연동
+2. **Phase 2**: OCR 기반 토스 앱 스크린샷 분석
+3. **Phase 3**: 마이데이터 제휴 기반 공식 API 연동
+
+---
+
+# 🛠 기술 스택 (Tech Stack)
+
+## **Frontend**
+- **Framework**: React 18+ with Vite
+- **Language**: TypeScript (타입 안전성 필수)
+- **State Management**: Zustand (가벼운 전역 상태)
+- **Visualization**: 
+  - **D3.js**: 마인드맵 데이터 바인딩 및 물리 엔진
+  - **React Flow**: 복잡한 노드 인터랙션 시 고려
+- **Styling**: Tailwind CSS (토스 스타일 UI)
+- **HTTP Client**: TanStack Query + Axios
+
+## **Backend**
+- **Runtime**: Node.js with Express
+- **Database**: PostgreSQL (사용자, 포트폴리오 데이터)
+- **Cache**: Redis (실시간 시세 캐싱, 성능 최적화)
+- **Authentication**: JWT + OAuth 2.0
+
+## **External APIs**
+1. **Primary**: 한국투자증권 KIS Open API (실시간 시세)
+2. **Secondary**: FinanceDataReader (과거 데이터)
+3. **OCR**: Google Cloud Vision API (토스 스크린샷 분석)
+
+---
+
+# 📊 핵심 기능 명세
+
+## **A. 마인드맵 시각화 로직**
+
+### **노드 구조**
+```
+중앙 노드: "나의 포트폴리오" (총 자산)
+├── 1차 분기: 뷰 모드별 분류
+│   ├── 섹터별 (IT, 금융, 바이오 등)
+│   ├── 수익률별 (고수익, 손실 등)
+│   └── 테마별 (AI, 배당, ESG 등)
+└── 2차 분기: 개별 종목
+```
+
+### **시각적 표현 규칙**
+
+**노드 크기 계산**:
+$$NodeSize = BaseSize \times \sqrt{\frac{StockValue}{TotalPortfolioValue}}$$
+
+**색상 매핑**:
+- 수익 (+): Green 그라데이션 (#22C55E ~ #15803D)
+- 손실 (-): Red 그라데이션 (#EF4444 ~ #DC2626)
+- 보합 (0): Neutral Gray (#9CA3AF)
+
+## **B. 데이터 연동 전략**
+
+### **Phase 1: MVP (수동 입력 + 실시간 시세)**
+```typescript
+interface Portfolio {
+  id: string;
+  userId: string;
+  name: string;
+  holdings: Holding[];
+  totalValue: number;
+  totalProfitLoss: number;
+}
+
+interface Holding {
+  symbol: string;        // 005930 (삼성전자)
+  name: string;
+  quantity: number;
+  avgPrice: number;
+  currentPrice: number;  // KIS API에서 실시간 업데이트
+  sector: string;
+  tags: string[];        // 사용자 정의 태그
+}
+```
+
+### **Phase 2: OCR 자동 인식**
+```typescript
+interface OCRResult {
+  success: boolean;
+  extractedStocks: {
+    symbol: string;
+    name: string;
+    quantity: number;
+    avgPrice: number;
+    confidence: number;   // 인식 정확도
+  }[];
+  errors: string[];
+}
+```
+
+## **C. 뷰 모드 시스템**
+
+### **1. 섹터별 뷰**
+- GICS 기준 산업 분류
+- 섹터 편중 위험도 표시
+- 리밸런싱 제안
+
+### **2. 수익률별 뷰**
+- 수익률 구간별 그룹화 (+20% 이상, +10%~20%, 0%~10%, -10%~0%, -10% 미만)
+- 손실 종목 비중 경고
+
+### **3. 테마별 뷰**
+- 사용자 커스텀 태그 기반
+- AI 관련주, 배당주, ESG 등 자유 분류
+
+---
+
+# 🎨 UI/UX 디자인 가이드라인
+
+## **디자인 철학**
+토스의 "Simple & Bold" 디자인 언어를 차용하여 복잡한 금융 데이터를 직관적으로 표현합니다.
+
+## **컬러 시스템**
+```css
+/* Primary Colors */
+--primary-green: #22C55E;    /* 수익 표시 */
+--primary-red: #EF4444;      /* 손실 표시 */
+--primary-blue: #3B82F6;     /* 액션 버튼 */
+
+/* Background */
+--bg-primary: #FFFFFF;
+--bg-secondary: #F9FAFB;
+--bg-tertiary: #F3F4F6;
+
+/* Text */
+--text-primary: #111827;
+--text-secondary: #6B7280;
+--text-tertiary: #9CA3AF;
+```
+
+## **타이포그래피**
+- **숫자**: Monospace 폰트 (정렬과 가독성)
+- **제목**: Bold Sans-serif
+- **본문**: Regular Sans-serif
+
+## **인터랙션 패턴**
+- 노드 클릭: 우측 드로어에서 상세 정보 표시
+- 호버: 툴팁으로 기본 정보 미리보기
+- 드래그: 노드 위치 재배치
+- 줌/팬: 마우스 휠 및 터치 제스처 지원
+
+---
+
+# 🗄 데이터베이스 스키마
+
+```sql
+-- 사용자 테이블
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 포트폴리오 테이블
+CREATE TABLE portfolios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    total_value DECIMAL(15,2) DEFAULT 0,
+    total_profit_loss DECIMAL(15,2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 보유 종목 테이블
+CREATE TABLE holdings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    portfolio_id UUID REFERENCES portfolios(id) ON DELETE CASCADE,
+    symbol VARCHAR(20) NOT NULL,           -- 005930
+    name VARCHAR(100) NOT NULL,            -- 삼성전자
+    market VARCHAR(10) DEFAULT 'KRX',      -- KRX, NYSE, NASDAQ
+    sector VARCHAR(50),                    -- IT, Finance, etc.
+    quantity DECIMAL(10,4) NOT NULL,       -- 보유 수량
+    avg_price DECIMAL(15,2) NOT NULL,      -- 평균 매수가
+    current_price DECIMAL(15,2),           -- 현재가 (캐시)
+    currency VARCHAR(3) DEFAULT 'KRW',     -- KRW, USD
+    tags TEXT[],                           -- 사용자 정의 태그
+    memo TEXT,                             -- 투자 메모
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 시세 데이터 캐시 테이블
+CREATE TABLE market_data (
+    symbol VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(100),
+    current_price DECIMAL(15,2),
+    change_rate DECIMAL(5,2),
+    volume BIGINT,
+    market_cap BIGINT,
+    sector VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 인덱스 생성
+CREATE INDEX idx_holdings_portfolio_id ON holdings(portfolio_id);
+CREATE INDEX idx_holdings_symbol ON holdings(symbol);
+CREATE INDEX idx_market_data_updated_at ON market_data(updated_at);
+```
+
+---
+
+# ⚡ 성능 및 보안 요구사항
+
+## **성능 목표**
+- 마인드맵 초기 로딩: ≤ 3초 (100개 종목 기준)
+- 노드 인터랙션 응답: ≤ 100ms
+- 실시간 시세 업데이트: ≤ 500ms (캐시 적중)
+
+## **보안 요구사항**
+- 모든 통신: HTTPS (TLS 1.3)
+- API 인증: JWT + Refresh Token
+- 민감 데이터: AES-256 암호화
+- Rate Limiting: Redis 기반 제한
+- OWASP Top 10 보안 취약점 대응
+
+## **확장성 고려사항**
+- 수평적 확장을 위한 Stateless 서버 설계
+- Redis Cluster를 통한 캐시 분산
+- CDN을 통한 정적 자산 배포
+- Database Connection Pooling
+
+---
+
+# 🚀 개발 단계별 로드맵
+
+## **Phase 1: MVP (3개월)**
+- [ ] 사용자 인증 시스템
+- [ ] 수동 포트폴리오 입력
+- [ ] 한국투자증권 API 연동
+- [ ] 기본 마인드맵 시각화 (섹터별, 수익률별)
+- [ ] 종목 상세 정보 패널
+
+## **Phase 2: 기능 확장 (2개월)**
+- [ ] OCR 기반 토스 스크린샷 분석
+- [ ] CSV/Excel 파일 업로드
+- [ ] 커스텀 태그 및 테마별 뷰
+- [ ] 포트폴리오 분석 리포트
+- [ ] 알림 및 경고 시스템
+
+## **Phase 3: 고도화 (2개월)**
+- [ ] 다중 증권사 API 통합
+- [ ] 실시간 WebSocket 연동
+- [ ] 고급 분석 도구 (리스크 메트릭)
+- [ ] 모바일 앱 개발
+- [ ] 소셜 기능 (포트폴리오 공유)
+
+---
+
+# 🎯 Cursor AI 개발 지침
+
+## **코딩 규칙**
+1. **타입 안전성**: `any` 타입 사용 금지, 모든 API 응답에 Interface 정의
+2. **에러 핸들링**: 외부 API 실패 시 Fallback 로직 필수
+3. **성능 최적화**: API 호출 시 Redis 캐싱 우선 확인
+4. **보안**: 환경 변수로 민감 정보 관리, Git 커밋 금지
+5. **컴포넌트 분리**: 비즈니스 로직과 UI 로직 명확히 분리
+
+## **API 설계 원칙**
+```typescript
+// 일관된 응답 형식
+interface ApiResponse<T> {
+  success: boolean;
+  data: T | null;
+  error?: {
+    code: string;
+    message: string;
+    details?: any;
+  };
+  timestamp: string;
+}
+```
+
+## **컴포넌트 네이밍 규칙**
+- React 컴포넌트: PascalCase (`MindMapView.tsx`)
+- 서비스 함수: camelCase (`portfolioService.ts`)
+- 상수: UPPER_SNAKE_CASE (`API_ENDPOINTS.ts`)
+- CSS 클래스: kebab-case (`mind-map-node`)
+
+---
+
+# 🔧 주요 라이브러리 및 도구
+
+## **Frontend 핵심 라이브러리**
+```json
+{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.0.0",
+    "d3": "^7.8.0",
+    "@types/d3": "^7.4.0",
+    "zustand": "^4.4.0",
+    "@tanstack/react-query": "^4.29.0",
+    "axios": "^1.4.0",
+    "tailwindcss": "^3.3.0",
+    "react-router-dom": "^6.14.0"
+  }
+}
+```
+
+## **Backend 핵심 라이브러리**
+```json
+{
+  "dependencies": {
+    "express": "^4.18.0",
+    "typescript": "^5.0.0",
+    "prisma": "^5.0.0",
+    "@prisma/client": "^5.0.0",
+    "redis": "^4.6.0",
+    "jsonwebtoken": "^9.0.0",
+    "bcrypt": "^5.1.0",
+    "axios": "^1.4.0",
+    "express-validator": "^7.0.0",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5"
+  }
+}
+```
+
+---
+
+**⚠️ Cursor AI 주의사항**: 
+- 토스 API 직접 연동 요청 시 "현재 불가능"함을 명시하고 OCR/수동 입력 대안 제시
+- 모든 외부 API 호출에 Rate Limiting과 에러 핸들링 포함
+- 금융 데이터 특성상 정확성과 보안을 최우선으로 고려
+```
+
+---
+
+## **2. Cursor AI 활용 개발 가이드**
+
+### **프로젝트 초기 설정**
+
+**Step 1: .cursorrules 파일 생성**
+
+프로젝트 루트에 다음 파일을 생성하세요:
+
+```markdown
+# MindStock Project Rules
+
+## Project Context
+마인드맵 기반 주식 포트폴리오 관리 서비스
+- React + D3.js 프론트엔드
+- Node.js + Express 백엔드
+- PostgreSQL + Redis
+- 한국투자증권 API 연동
+
+## Coding Standards
+- TypeScript 필수 사용
+- 함수형 프로그래밍 선호
+- async/await 패턴 사용
+- 명확한 에러 핸들링
+- JSDoc 주석 작성
+
+## Security Rules
+- API 키는 환경 변수로 관리
+- JWT 토큰 기반 인증
+- SQL Injection 방지
+- XSS 공격 방어
+
+## Performance Guidelines
+- API 응답 캐싱 (Redis)
+- 이미지 최적화
+- 코드 스플리팅
+- 메모이제이션 활용
+
+## File Naming
+- Components: PascalCase
+- Services: camelCase  
+- Utils: camelCase
+- Constants: UPPER_SNAKE_CASE
+```
+
+### **단계별 개발 프롬프트 모음**
+
+**Phase 1: 백엔드 API 개발**
+
+**Cursor 프롬프트 1: 프로젝트 초기 설정**
+```
+Create a Node.js Express backend project for a stock portfolio management service:
+
+1. Setup package.json with dependencies:
+   - express, cors, helmet, dotenv
+   - prisma, @prisma/client
+   - redis, jsonwebtoken, bcrypt
+   - axios, express-validator
+
+2. Create project structure:
+   - src/routes (API routes)
+   - src/services (business logic)
+   - src/middleware (auth, validation)
+   - src/utils (helpers)
+   - src/types (TypeScript interfaces)
+
+3. Setup basic Express server with:
+   - CORS configuration
+   - Security middleware (helmet)
+   - Request validation
+   - Error handling middleware
+
+4. Create .env.example with required variables
+
+Generate complete, production-ready code.
+```
+
+**Cursor 프롬프트 2: 한국투자증권 API 클라이언트**
+```
+Create a KIS (Korea Investment Securities) API client service:
+
+Requirements:
+1. OAuth 2.0 token management
+   - Automatic token refresh
+   - Redis-based token caching
+   - Error handling for auth failures
+
+2. Stock data methods:
+   - getCurrentPrice(symbol: string)
+   - getStockInfo(symbol: string) 
+   - getDailyChart(symbol: string, days: number)
+
+3. Rate limiting compliance:
+   - Implement request queuing
+   - Respect API limits (20 requests/second)
+   - Exponential backoff on failures
+
+4. TypeScript interfaces for all responses
+
+5. Comprehensive error handling and logging
+
+Generate complete implementation with tests.
+```
+
+**Phase 2: 프론트엔드 마인드맵 개발**
+
+**Cursor 프롬프트 3: React 마인드맵 컴포넌트**
+```
+Create a MindMap visualization component using React and D3.js:
+
+File: src/components/MindMap/MindMapView.tsx
+
+Requirements:
+1. Props interface:
+   - data: hierarchical portfolio data
+   - viewMode: 'sector' | 'profitLoss' | 'theme'
+   - onNodeClick: (nodeId: string) => void
+   - width: number, height: number
+
+2. D3.js force simulation:
+   - Force-directed layout
+   - Collision detection
+   - Smooth animations (300ms)
+   - Zoom and pan functionality
+
+3. Node rendering:
+   - Circle size based on portfolio weight
+   - Color based on profit/loss percentage
+   - Text labels with stock names
+   - Hover tooltips with details
+
+4. Interactions:
+   - Click to expand/collapse
+   - Drag to reposition
+   - Double-click to focus
+   - Context menu on right-click
+
+5. Performance optimizations:
+   - Canvas rendering for 100+ nodes
+   - Virtualization for large datasets
+   - Debounced resize handling
+
+Generate TypeScript component with proper types.
+```
+
+**Cursor 프롬프트 4: 포트폴리오 데이터 처리**
+```
+Create portfolio data transformation service:
+
+File: src/services/portfolioTransform.ts
+
+Requirements:
+1. Transform flat portfolio data to hierarchical structure:
+   - Group by sector/theme/profitLoss
+   - Calculate node sizes and colors
+   - Handle nested categories
+
+2. Node size calculation:
+   size = baseSize * sqrt(stockValue / totalValue)
+
+3. Color mapping based on profit/loss:
+   - Profit: Green gradient (#22C55E to #15803D)
+   - Loss: Red gradient (#EF4444 to #DC2626)
+   - Neutral: Gray (#9CA3AF)
+
+4. View mode transformations:
+   - sectorView(): Group by GICS sectors
+   - profitLossView(): Group by performance ranges
+   - themeView(): Group by user tags
+
+5. TypeScript interfaces:
+   - Portfolio, Holding, MindMapNode
+   - ViewMode enum
+   - TransformOptions interface
+
+Include unit tests and example data.
+```
+
+### **OCR 기능 구현**
+
+**Cursor 프롬프트 5: 토스 스크린샷 OCR**
+```
+Create an OCR service for parsing Toss app screenshots:
+
+File: src/services/ocrService.ts
+
+Requirements:
+1. Image preprocessing:
+   - Resize and optimize uploaded images
+   - Convert to grayscale
+   - Enhance contrast for better OCR
+
+2. Google Cloud Vision API integration:
+   - Text detection and extraction
+   - Table structure recognition
+   - Confidence scoring
+
+3. Toss-specific parsing logic:
+   - Detect stock symbols (6-digit codes)
+   - Extract quantities and prices
+   - Parse Korean stock names
+   - Handle different screen layouts
+
+4. Data validation:
+   - Verify stock codes against KRX database
+   - Check price reasonableness
+   - Flag low-confidence extractions
+
+5. Response format:
+   interface OCRResult {
+     success: boolean;
+     stocks: ExtractedStock[];
+     errors: string[];
+     confidence: number;
+   }
+
+6. Error handling:
+   - Image quality issues
+   - Unrecognized formats
+   - API failures
+
+Generate complete implementation with test cases.
+```
+
+### **실시간 데이터 업데이트**
+
+**Cursor 프롬프트 6: 실시간 포트폴리오 업데이트**
+```
+Create a real-time portfolio update system:
+
+Requirements:
+1. WebSocket connection management:
+   - Auto-reconnection on disconnect
+   - Heartbeat/ping-pong
+   - Connection pooling
+
+2. Price update pipeline:
+   - Subscribe to stock price changes
+   - Batch update multiple stocks
+   - Calculate portfolio metrics in real-time
+
+3. Redis pub/sub integration:
+   - Publish price updates to subscribers
+   - Handle multiple client connections
+   - Message queuing for offline clients
+
+4. React hooks for real-time data:
+   - useRealtimePortfolio()
+   - useStockPrices()
+   - Connection status management
+
+5. Performance optimizations:
+   - Debounced updates (max 1/second)
+   - Only update visible nodes
+   - Efficient re-rendering
+
+6. Error handling:
+   - Graceful degradation on connection loss
+   - Fallback to polling
+   - User notifications
+
+Generate both backend and frontend code.
+```
+
+### **테스팅 및 최적화**
+
+**Cursor 프롬프트 7: 종합 테스트 구현**
+```
+Create comprehensive test suite for the portfolio service:
+
+1. Backend tests (Jest):
+   - Unit tests for all services
+   - Integration tests for API endpoints
+   - Mock external API calls (KIS API)
+   - Database transaction tests
+
+2. Frontend tests (React Testing Library):
+   - Component rendering tests
+   - User interaction tests
+   - D3.js visualization tests
+   - API integration tests
+
+3. E2E tests (Playwright):
+   - Complete user workflows
+   - Portfolio creation and management
+   - MindMap interactions
+   - OCR upload process
+
+4. Performance tests:
+   - Load testing with 100+ stocks
+   - Memory usage monitoring
+   - API response time testing
+   - Database query optimization
+
+5. Test data factories:
+   - Mock portfolio data
+   - Fake stock prices
+   - Sample OCR images
+
+Generate complete test suite with CI/CD integration.
+```
+
+## **3. 개발 체크리스트 및 실행 가이드**
+
+### **백엔드 개발 체크리스트**
+
+```markdown
+## 환경 설정
+- [ ] Node.js 18+ 설치
+- [ ] PostgreSQL 설치 및 DB 생성
+- [ ] Redis 설치 및 실행
+- [ ] 한국투자증권 API 키 발급
+
+## 프로젝트 초기화
+- [ ] npm init 및 패키지 설치
+- [ ] TypeScript 설정 (tsconfig.json)
+- [ ] Prisma 스키마 정의
+- [ ] 환경 변수 설정 (.env)
+
+## 핵심 기능 구현
+- [ ] 사용자 인증 (JWT)
+- [ ] 포트폴리오 CRUD API
+- [ ] KIS API 클라이언트
+- [ ] Redis 캐싱 로직
+- [ ] OCR 서비스 구현
+
+## 테스트 및 배포
+- [ ] 단위 테스트 작성
+- [ ] API 문서화 (Swagger)
+- [ ] Docker 컨테이너화
+- [ ] CI/CD 파이프라인 설정
+```
+
+### **프론트엔드 개발 체크리스트**
+
+```markdown
+## 환경 설정
+- [ ] Node.js 18+ 설치
+- [ ] Vite + React 프로젝트 생성
+- [ ] TypeScript 설정
+- [ ] TailwindCSS 설정
+
+## 핵심 컴포넌트 구현
+- [ ] MindMap 시각화 (D3.js)
+- [ ] 포트폴리오 관리 UI
+- [ ] 실시간 데이터 연동
+- [ ] OCR 업로드 인터페이스
+
+## 상태 관리 및 API
+- [ ] Zustand 스토어 설정
+- [ ] TanStack Query 설정
+- [ ] API 서비스 함수
+- [ ] 에러 바운더리
+
+## 최적화 및 배포
+- [ ] 코드 스플리팅
+- [ ] 이미지 최적화
+- [ ] PWA 설정 (선택사항)
+- [ ] 빌드 및 배포
+```
+
+## **4. 실행 및 배포 가이드**
+
+### **로컬 개발 환경 실행**
+
+```bash
+# 1. 저장소 클론 및 의존성 설치
+git clone <repository-url>
+cd mindstock
+
+# 2. 백엔드 설정
+cd backend
+npm install
+cp .env.example .env
+# .env 파일에 API 키 등 설정
+
+# 3. 데이터베이스 마이그레이션
+npx prisma migrate dev
+npx prisma generate
+
+# 4. 백엔드 서버 실행
+npm run dev
+
+# 5. 프론트엔드 설정 (새 터미널)
+cd ../frontend
+npm install
+npm run dev
+```
+
+### **프로덕션 배포**
+
+**Docker를 활용한 배포**
+
+```dockerfile
+# backend/Dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npx prisma generate
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/mindstock
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - db
+      - redis
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mindstock
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+```
+
+이 PRD와 개발 가이드를 활용하여 Cursor AI와 함께 효율적으로 마인드맵 기반 주식 포트폴리오 관리 서비스를 개발하시기 바랍니다. 각 단계에서 제시된 프롬프트를 Cursor AI에 입력하면 구체적이고 실용적인 코드를 생성받을 수 있습니다.
+---

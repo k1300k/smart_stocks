@@ -1,0 +1,36 @@
+# MindStock Project Rules
+
+## Project Context
+마인드맵 기반 주식 포트폴리오 관리 서비스
+- React + D3.js 프론트엔드
+- Node.js + Express 백엔드
+- PostgreSQL + Redis
+- 한국투자증권 API 연동
+
+## Coding Standards
+- TypeScript 필수 사용
+- 함수형 프로그래밍 선호
+- async/await 패턴 사용
+- 명확한 에러 핸들링
+- JSDoc 주석 작성
+- SOLID 원칙 준수
+- Clean Architecture 적용
+
+## Security Rules
+- API 키는 환경 변수로 관리
+- JWT 토큰 기반 인증
+- SQL Injection 방지
+- XSS 공격 방어
+
+## Performance Guidelines
+- API 응답 캐싱 (Redis)
+- 이미지 최적화
+- 코드 스플리팅
+- 메모이제이션 활용
+
+## File Naming
+- Components: PascalCase
+- Services: camelCase  
+- Utils: camelCase
+- Constants: UPPER_SNAKE_CASE
+
