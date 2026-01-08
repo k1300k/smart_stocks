@@ -77,9 +77,6 @@ export default function MindMapView({
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide<MindMapNode>().radius(d => (d.radius || 20) + 10));
 
-    // 타입 단언을 위한 링크 타입 정의
-    type LinkType = d3.SimulationLinkDatum<MindMapNode>;
-
     // 루트 노드를 중앙에 고정
     const rootNode = nodes.find(n => n.id === 'root');
     if (rootNode) {
@@ -195,13 +192,15 @@ export default function MindMapView({
 
     function dragStarted(event: d3.D3DragEvent<SVGGElement, MindMapNode, unknown>) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
+      const subject = event.subject as MindMapNode;
+      subject.fx = subject.x;
+      subject.fy = subject.y;
     }
 
     function dragged(event: d3.D3DragEvent<SVGGElement, MindMapNode, unknown>) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
+      const subject = event.subject as MindMapNode;
+      subject.fx = event.x;
+      subject.fy = event.y;
     }
 
     function dragEnded(event: d3.D3DragEvent<SVGGElement, MindMapNode, unknown>) {
