@@ -179,6 +179,7 @@ interface ForeignStock {
 
 function getForeignStocks(): Array<{ symbol: string; name: string; market: string; sector?: string; nameKo?: string }> {
   const stocks: ForeignStock[] = [
+    // 주요 IT 기업
     { symbol: 'AAPL', name: 'Apple Inc.', nameKo: '애플', market: 'NASDAQ', sector: 'IT' },
     { symbol: 'MSFT', name: 'Microsoft Corporation', nameKo: '마이크로소프트', market: 'NASDAQ', sector: 'IT' },
     { symbol: 'GOOGL', name: 'Alphabet Inc.', nameKo: '구글', market: 'NASDAQ', sector: 'IT' },
@@ -186,19 +187,50 @@ function getForeignStocks(): Array<{ symbol: string; name: string; market: strin
     { symbol: 'TSLA', name: 'Tesla, Inc.', nameKo: '테슬라', market: 'NASDAQ', sector: '자동차' },
     { symbol: 'META', name: 'Meta Platforms Inc.', nameKo: '메타', market: 'NASDAQ', sector: 'IT' },
     { symbol: 'NVDA', name: 'NVIDIA Corporation', nameKo: '엔비디아', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'NFLX', name: 'Netflix, Inc.', nameKo: '넷플릭스', market: 'NASDAQ', sector: '엔터테인먼트' },
+    
+    // 반도체 & 기술
+    { symbol: 'AMD', name: 'Advanced Micro Devices, Inc.', nameKo: 'AMD', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'INTC', name: 'Intel Corporation', nameKo: '인텔', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'QCOM', name: 'QUALCOMM Incorporated', nameKo: '퀄컴', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'AVGO', name: 'Broadcom Inc.', nameKo: '브로드컴', market: 'NASDAQ', sector: 'IT' },
+    
+    // 우주 & 통신
+    { symbol: 'ASTS', name: 'AST SpaceMobile, Inc.', nameKo: 'AST 스페이스모바일', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'RKLB', name: 'Rocket Lab USA, Inc.', nameKo: '로켓랩', market: 'NASDAQ', sector: '항공우주' },
+    { symbol: 'SPCE', name: 'Virgin Galactic Holdings, Inc.', nameKo: '버진갤럭틱', market: 'NYSE', sector: '항공우주' },
+    
+    // 금융
     { symbol: 'JPM', name: 'JPMorgan Chase & Co.', nameKo: 'JP모건', market: 'NYSE', sector: '금융' },
     { symbol: 'V', name: 'Visa Inc.', nameKo: '비자', market: 'NYSE', sector: '금융' },
+    { symbol: 'MA', name: 'Mastercard Inc.', nameKo: '마스터카드', market: 'NYSE', sector: '금융' },
+    { symbol: 'BAC', name: 'Bank of America Corp.', nameKo: '뱅크오브아메리카', market: 'NYSE', sector: '금융' },
+    
+    // 헬스케어
     { symbol: 'JNJ', name: 'Johnson & Johnson', nameKo: '존슨앤존슨', market: 'NYSE', sector: '바이오' },
+    { symbol: 'UNH', name: 'UnitedHealth Group Inc.', nameKo: '유나이티드헬스', market: 'NYSE', sector: '의료' },
+    { symbol: 'PFE', name: 'Pfizer Inc.', nameKo: '화이자', market: 'NYSE', sector: '바이오' },
+    { symbol: 'MRNA', name: 'Moderna, Inc.', nameKo: '모더나', market: 'NASDAQ', sector: '바이오' },
+    
+    // 소비재 & 유통
     { symbol: 'WMT', name: 'Walmart Inc.', nameKo: '월마트', market: 'NYSE', sector: '유통' },
     { symbol: 'PG', name: 'Procter & Gamble Co.', nameKo: 'P&G', market: 'NYSE', sector: '소비재' },
-    { symbol: 'MA', name: 'Mastercard Inc.', nameKo: '마스터카드', market: 'NYSE', sector: '금융' },
-    { symbol: 'UNH', name: 'UnitedHealth Group Inc.', nameKo: '유나이티드헬스', market: 'NYSE', sector: '의료' },
     { symbol: 'HD', name: 'The Home Depot, Inc.', nameKo: '홈디포', market: 'NYSE', sector: '소비재' },
+    { symbol: 'NKE', name: 'Nike, Inc.', nameKo: '나이키', market: 'NYSE', sector: '소비재' },
+    { symbol: 'SBUX', name: 'Starbucks Corporation', nameKo: '스타벅스', market: 'NASDAQ', sector: '소비재' },
+    
+    // 엔터테인먼트
     { symbol: 'DIS', name: 'The Walt Disney Company', nameKo: '월트디즈니', market: 'NYSE', sector: '엔터테인먼트' },
-    { symbol: 'BAC', name: 'Bank of America Corp.', nameKo: '뱅크오브아메리카', market: 'NYSE', sector: '금융' },
+    
+    // 에너지
     { symbol: 'XOM', name: 'Exxon Mobil Corporation', nameKo: '엑슨모빌', market: 'NYSE', sector: '에너지' },
     { symbol: 'CVX', name: 'Chevron Corporation', nameKo: '셰브론', market: 'NYSE', sector: '에너지' },
-    { symbol: 'NFLX', name: 'Netflix, Inc.', nameKo: '넷플릭스', market: 'NASDAQ', sector: '엔터테인먼트' },
+    
+    // 전기차 & 자동차
+    { symbol: 'F', name: 'Ford Motor Company', nameKo: '포드', market: 'NYSE', sector: '자동차' },
+    { symbol: 'GM', name: 'General Motors Company', nameKo: 'GM', market: 'NYSE', sector: '자동차' },
+    { symbol: 'RIVN', name: 'Rivian Automotive, Inc.', nameKo: '리비안', market: 'NASDAQ', sector: '자동차' },
+    { symbol: 'LCID', name: 'Lucid Group, Inc.', nameKo: '루시드', market: 'NASDAQ', sector: '자동차' },
   ];
   
   return stocks.map(stock => ({
@@ -240,26 +272,25 @@ function getBasePrice(symbol: string, market?: string): number {
   
   // 해외 주식 가격 (달러)
   const foreignPriceMap: Record<string, number> = {
-    'AAPL': 180, // Apple
-    'MSFT': 380, // Microsoft
-    'GOOGL': 140, // Alphabet
-    'AMZN': 150, // Amazon
-    'TSLA': 250, // Tesla
-    'META': 350, // Meta
-    'NVDA': 500, // NVIDIA
-    'JPM': 150, // JPMorgan
-    'V': 250, // Visa
-    'JNJ': 160, // Johnson & Johnson
-    'WMT': 160, // Walmart
-    'PG': 150, // Procter & Gamble
-    'MA': 400, // Mastercard
-    'UNH': 500, // UnitedHealth
-    'HD': 350, // Home Depot
-    'DIS': 100, // Disney
-    'BAC': 35, // Bank of America
-    'XOM': 110, // Exxon Mobil
-    'CVX': 150, // Chevron
-    'NFLX': 450, // Netflix
+    // 주요 IT
+    'AAPL': 180, 'MSFT': 380, 'GOOGL': 140, 'AMZN': 150,
+    'TSLA': 250, 'META': 350, 'NVDA': 500, 'NFLX': 450,
+    // 반도체
+    'AMD': 120, 'INTC': 45, 'QCOM': 140, 'AVGO': 900,
+    // 우주 & 통신
+    'ASTS': 25, 'RKLB': 18, 'SPCE': 8,
+    // 금융
+    'JPM': 150, 'V': 250, 'MA': 400, 'BAC': 35,
+    // 헬스케어
+    'JNJ': 160, 'UNH': 500, 'PFE': 30, 'MRNA': 85,
+    // 소비재
+    'WMT': 160, 'PG': 150, 'HD': 350, 'NKE': 110, 'SBUX': 95,
+    // 엔터테인먼트
+    'DIS': 100,
+    // 에너지
+    'XOM': 110, 'CVX': 150,
+    // 자동차
+    'F': 12, 'GM': 38, 'RIVN': 15, 'LCID': 3,
   };
   
   if (market === 'KRX' || (!market && krxPriceMap[symbol])) {

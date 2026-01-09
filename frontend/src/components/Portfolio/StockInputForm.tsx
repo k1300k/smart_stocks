@@ -122,14 +122,14 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
                 setFormData({
                   ...formData,
                   symbol: stock.symbol,
-                  name: stock.name,
+                  name: stock.nameKo ? `${stock.nameKo} (${stock.name})` : stock.name,
                   currentPrice: currentPrice,
                   sector: stock.sector || formData.sector,
                 });
               }}
             />
             <p className="mt-1 text-xs text-text-tertiary">
-              종목명 또는 종목 코드로 검색하세요
+              검색되지 않는 종목은 아래에서 직접 입력하세요
             </p>
           </div>
         )}
