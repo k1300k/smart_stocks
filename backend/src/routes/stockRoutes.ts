@@ -24,7 +24,8 @@ router.get('/search', async (req: Request, res: Response) => {
       });
     }
 
-    const results = await searchStocks(query.trim(), market);
+    const alphaKey = req.query.alphaKey as string | undefined;
+    const results = await searchStocks(query.trim(), market, alphaKey);
     
     res.json({
       success: true,
@@ -64,7 +65,8 @@ router.get('/price/:symbol', async (req: Request, res: Response) => {
       });
     }
 
-    const stockInfo = await getCurrentPrice(symbol, market);
+    const alphaKey = req.query.alphaKey as string | undefined;
+    const stockInfo = await getCurrentPrice(symbol, market, alphaKey);
     
     res.json({
       success: true,

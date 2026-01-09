@@ -10,11 +10,13 @@ import PortfolioList from './components/Portfolio/PortfolioList';
 import { ViewMode, MindMapNode } from './types';
 import { transformPortfolioToMindMap } from './services/portfolioTransform';
 import { usePortfolioStore } from './stores/portfolioStore';
+import ApiKeyModal from './components/Settings/ApiKeyModal';
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('sector');
   const [selectedNode, setSelectedNode] = useState<MindMapNode | null>(null);
   const [showPortfolioList, setShowPortfolioList] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const portfolio = usePortfolioStore(state => state.portfolio);
 
   // 포트폴리오 데이터를 마인드맵 노드로 변환
@@ -45,6 +47,12 @@ function App() {
             >
               포트폴리오 관리
             </button>
+            <button
+              onClick={() => setShowApiKeyModal(true)}
+              className="px-4 py-2 rounded-md border border-gray-200 bg-white text-sm font-medium text-text-secondary transition hover:border-primary-blue hover:text-primary-blue"
+            >
+              API 키 설정
+            </button>
             <ViewModeSelector currentMode={viewMode} onModeChange={setViewMode} />
           </div>
         </div>
@@ -73,6 +81,7 @@ function App() {
 
       {/* 노드 상세 패널 */}
       <NodeDetailPanel node={selectedNode} onClose={handleClosePanel} />
+      <ApiKeyModal isOpen={showApiKeyModal} onClose={() => setShowApiKeyModal(false)} />
     </div>
   );
 }

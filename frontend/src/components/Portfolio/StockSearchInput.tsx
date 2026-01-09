@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { searchStocks, getCurrentPrice, StockSearchResult } from '../../services/stockApi';
+import { useApiKey } from '../../contexts/ApiKeyContext';
 
 interface StockSearchInputProps {
   onSelect: (stock: StockSearchResult, currentPrice: number) => void;
@@ -19,6 +20,7 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { alphaKey } = useApiKey();
 
   // 검색 디바운스
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const searchResults = await searchStocks(query, market || undefined);
+        const searchResults = await searchStocks(query, market || undefined, alphaKey || undefined);
         setResults(searchResults);
         setShowResults(searchResults.length > 0);
         setSelectedIndex(-1);
@@ -45,7 +47,7 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query, market]);
+  }, [query, market, alphaKey]);
 
   // 외부 클릭 시 결과 숨기기
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
   const handleSelect = async (stock: StockSearchResult) => {
     try {
       setIsLoading(true);
-      const stockInfo = await getCurrentPrice(stock.symbol, stock.market);
+      const stockInfo = await getCurrentPrice(stock.symbol, stock.market, alphaKey || undefined);
       onSelect(stock, stockInfo.currentPrice);
       setQuery(stock.name);
       setShowResults(false);

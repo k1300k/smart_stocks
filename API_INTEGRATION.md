@@ -65,8 +65,13 @@ KIS_APP_SECRET=your-kis-app-secret-here
 KIS_BASE_URL=https://openapi.koreainvestment.com:9443
 
 # Alpha Vantage API
-ALPHA_VANTAGE_API_KEY=your-alpha-vantage-api-key-here
+ALPHA_VANTAGE_API_KEY=TB6MLLZCCCNOCVLR
 ```
+
+#### 프론트엔드 (앱 내 입력)
+- 앱 상단 오른쪽의 **API 키 설정** 버튼을 눌러 Alpha Vantage 키를 입력합니다.
+- 입력한 키는 브라우저 로컬 저장소에 보관되며, 유효 기간 동안 `alphaKey` 파라미터로 자동 전송됩니다.
+- 키가 없거나 올바르지 않으면 기존 샘플 데이터에서 정상적으로 검색/현재가를 보여줍니다.
 
 ### 2. 서버 재시작
 

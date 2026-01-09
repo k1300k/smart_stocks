@@ -29,7 +29,7 @@ interface StockSearchResult {
 /**
  * 종목 검색 (국내/해외 주식)
  */
-export async function searchStocks(query: string, market?: string): Promise<StockSearchResult[]> {
+export async function searchStocks(query: string, market?: string, alphaKey?: string): Promise<StockSearchResult[]> {
   if (!query || query.length < 2) {
     return [];
   }
@@ -55,9 +55,9 @@ export async function searchStocks(query: string, market?: string): Promise<Stoc
     
     if (market === 'NYSE' || market === 'NASDAQ' || !market) {
       // 해외 주식 - Alpha Vantage API
-      if (isAlphaVantageConfigured()) {
+      if (isAlphaVantageConfigured(alphaKey)) {
         try {
-          const foreignResults = await searchForeignStocks(query);
+          const foreignResults = await searchForeignStocks(query, alphaKey);
           apiResults = apiResults.concat(foreignResults);
         } catch (error) {
           console.error('Alpha Vantage API error, using fallback:', error);
@@ -107,7 +107,7 @@ export async function searchStocks(query: string, market?: string): Promise<Stoc
 /**
  * 현재가 조회
  */
-export async function getCurrentPrice(symbol: string, market?: string): Promise<StockInfo> {
+export async function getCurrentPrice(symbol: string, market?: string, alphaKey?: string): Promise<StockInfo> {
   try {
     let apiResult = null;
     
@@ -123,9 +123,9 @@ export async function getCurrentPrice(symbol: string, market?: string): Promise<
       }
     } else {
       // 해외 주식
-      if (isAlphaVantageConfigured()) {
+      if (isAlphaVantageConfigured(alphaKey)) {
         try {
-          apiResult = await getForeignStockPrice(symbol);
+          apiResult = await getForeignStockPrice(symbol, alphaKey);
         } catch (error) {
           console.error('Alpha Vantage API error, using fallback:', error);
         }

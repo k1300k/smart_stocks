@@ -35,7 +35,11 @@ interface AlphaVantageQuote {
 /**
  * 해외 주식 검색
  */
-export async function searchForeignStocks(query: string): Promise<Array<{
+function resolveApiKey(overrideKey?: string) {
+  return (overrideKey?.trim() || ALPHA_VANTAGE_API_KEY).trim();
+}
+
+export async function searchForeignStocks(query: string, apiKey?: string): Promise<Array<{
   symbol: string;
   name: string;
   market: string;
@@ -46,7 +50,7 @@ export async function searchForeignStocks(query: string): Promise<Array<{
       params: {
         function: 'SYMBOL_SEARCH',
         keywords: query,
-        apikey: ALPHA_VANTAGE_API_KEY,
+        apikey: resolveApiKey(apiKey),
       },
       timeout: 5000,
     });
@@ -71,7 +75,7 @@ export async function searchForeignStocks(query: string): Promise<Array<{
 /**
  * 해외 주식 현재가 조회
  */
-export async function getForeignStockPrice(symbol: string): Promise<{
+export async function getForeignStockPrice(symbol: string, apiKey?: string): Promise<{
   symbol: string;
   currentPrice: number;
   changeAmount: number;
@@ -83,7 +87,7 @@ export async function getForeignStockPrice(symbol: string): Promise<{
       params: {
         function: 'GLOBAL_QUOTE',
         symbol: symbol,
-        apikey: ALPHA_VANTAGE_API_KEY,
+        apikey: resolveApiKey(apiKey),
       },
       timeout: 5000,
     });
@@ -114,6 +118,7 @@ export async function getForeignStockPrice(symbol: string): Promise<{
 /**
  * API 키 유효성 확인
  */
-export function isAlphaVantageConfigured(): boolean {
-  return ALPHA_VANTAGE_API_KEY !== 'demo' && ALPHA_VANTAGE_API_KEY.length > 0;
+export function isAlphaVantageConfigured(overrideKey?: string): boolean {
+  const key = resolveApiKey(overrideKey);
+  return !!key && key !== 'demo';
 }
