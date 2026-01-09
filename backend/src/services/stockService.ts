@@ -257,6 +257,9 @@ function getForeignStocks(): Array<{ symbol: string; name: string; market: strin
     { symbol: 'UNH', name: 'UnitedHealth Group Inc.', nameKo: '유나이티드헬스', market: 'NYSE', sector: '의료' },
     { symbol: 'PFE', name: 'Pfizer Inc.', nameKo: '화이자', market: 'NYSE', sector: '바이오' },
     { symbol: 'MRNA', name: 'Moderna, Inc.', nameKo: '모더나', market: 'NASDAQ', sector: '바이오' },
+    { symbol: 'NVO', name: 'Novo Nordisk A/S', nameKo: '노보노디스크', market: 'NYSE', sector: '바이오' },
+    { symbol: 'LLY', name: 'Eli Lilly and Company', nameKo: '일라이릴리', market: 'NYSE', sector: '바이오' },
+    { symbol: 'ABBV', name: 'AbbVie Inc.', nameKo: '애브비', market: 'NYSE', sector: '바이오' },
     
     // 소비재 & 유통
     { symbol: 'WMT', name: 'Walmart Inc.', nameKo: '월마트', market: 'NYSE', sector: '유통' },
@@ -329,6 +332,7 @@ function getBasePrice(symbol: string, market?: string): number {
     'JPM': 150, 'V': 250, 'MA': 400, 'BAC': 35,
     // 헬스케어
     'JNJ': 160, 'UNH': 500, 'PFE': 30, 'MRNA': 85,
+    'NVO': 135, 'LLY': 620, 'ABBV': 170,
     // 소비재
     'WMT': 160, 'PG': 150, 'HD': 350, 'NKE': 110, 'SBUX': 95,
     // 엔터테인먼트
