@@ -148,9 +148,9 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
           placeholder={
             market === 'KRX'
               ? '종목명 또는 종목 코드 검색 (예: 삼성전자, 005930)'
-              : market === 'NYSE'
-              ? '종목명 또는 심볼 검색 (예: Apple, AAPL, 애플)'
-              : '종목명 또는 코드 검색 (예: 삼성전자, Apple, 애플, AAPL)'
+              : market === 'NYSE' || market === 'NASDAQ'
+              ? '티커 또는 종목명 검색 (예: AAPL, Apple, 애플)'
+              : '티커 또는 종목명 검색 (예: AAPL, 삼성전자, Apple, 애플)'
           }
           disabled={disabled}
           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:bg-gray-100"

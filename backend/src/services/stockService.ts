@@ -46,17 +46,35 @@ export async function searchStocks(query: string, market?: string): Promise<Stoc
       stocks = stocks.concat(getForeignStocks());
     }
     
-    // 검색 필터링 (한글 이름 포함)
-    const queryLower = query.toLowerCase();
-    const filtered = stocks.filter(
-      stock => {
-        const nameMatch = stock.name.toLowerCase().includes(queryLower);
-        const symbolMatch = stock.symbol.toLowerCase().includes(queryLower);
-        const nameKoMatch = (stock as any).nameKo && (stock as any).nameKo.includes(query);
+    // 검색 필터링 (한글 이름, 티커 우선 검색)
+    const queryLower = query.toUpperCase().trim(); // 티커는 대문자로 변환
+    const queryLowerForName = query.toLowerCase();
+    
+    const filtered = stocks
+      .map(stock => {
+        const stockAny = stock as any;
+        // 티커 정확 매칭 (해외주식 우선)
+        const exactSymbolMatch = stock.market !== 'KRX' && stock.symbol === queryLower;
+        // 티커 부분 매칭
+        const symbolMatch = stock.symbol.toUpperCase().includes(queryLower);
+        // 이름 매칭
+        const nameMatch = stock.name.toLowerCase().includes(queryLowerForName);
+        // 한글 이름 매칭
+        const nameKoMatch = stockAny.nameKo && stockAny.nameKo.includes(query);
         
-        return nameMatch || symbolMatch || nameKoMatch;
-      }
-    );
+        // 우선순위 점수 계산
+        let score = 0;
+        if (exactSymbolMatch) score = 100; // 티커 정확 매칭 최우선
+        else if (symbolMatch && stock.market !== 'KRX') score = 80; // 해외 티커 부분 매칭
+        else if (symbolMatch) score = 50; // 국내 종목 코드 매칭
+        else if (nameKoMatch) score = 40; // 한글 이름 매칭
+        else if (nameMatch) score = 30; // 영문 이름 매칭
+        
+        return { stock, score, matches: exactSymbolMatch || symbolMatch || nameMatch || nameKoMatch };
+      })
+      .filter(item => item.matches)
+      .sort((a, b) => b.score - a.score) // 점수 높은 순으로 정렬
+      .map(item => item.stock);
 
     return filtered.slice(0, 10); // 최대 10개 반환
   } catch (error) {
