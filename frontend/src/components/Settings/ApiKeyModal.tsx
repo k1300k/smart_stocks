@@ -39,7 +39,7 @@ export default function ApiKeyModal({ isOpen, onClose }: ApiKeyModalProps) {
           type="text"
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
-          placeholder="예: TB6MLLZCCCNOCVLR"
+          placeholder="예: T***************"
           className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-blue focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
         />
         <div className="mt-4 flex gap-2">

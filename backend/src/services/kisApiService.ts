@@ -27,11 +27,16 @@ async function getAccessToken(): Promise<string> {
       appsecret: KIS_APP_SECRET,
     });
 
-    accessToken = response.data.access_token;
+    const token = response.data.access_token;
+    if (!token) {
+      throw new Error('토큰을 받지 못했습니다.');
+    }
+    
+    accessToken = token;
     // 토큰 만료 시간 (24시간 - 5분 여유)
     tokenExpiry = Date.now() + (24 * 60 * 60 * 1000) - (5 * 60 * 1000);
 
-    return accessToken;
+    return token;
   } catch (error) {
     console.error('KIS token error:', error);
     throw new Error('한국투자증권 API 토큰 발급 실패');

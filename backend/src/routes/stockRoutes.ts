@@ -11,17 +11,18 @@ const router = Router();
  * 종목 검색
  * GET /api/stocks/search?q=삼성&market=KRX
  */
-router.get('/search', async (req: Request, res: Response) => {
+router.get('/search', async (req: Request, res: Response): Promise<void> => {
   try {
     const query = req.query.q as string;
     const market = req.query.market as string | undefined;
     
     if (!query || query.trim().length < 2) {
-      return res.json({
+      res.json({
         success: true,
         data: [],
         timestamp: new Date().toISOString(),
       });
+      return;
     }
 
     const alphaKey = req.query.alphaKey as string | undefined;
@@ -49,13 +50,13 @@ router.get('/search', async (req: Request, res: Response) => {
  * 현재가 조회
  * GET /api/stocks/price/:symbol?market=KRX
  */
-router.get('/price/:symbol', async (req: Request, res: Response) => {
+router.get('/price/:symbol', async (req: Request, res: Response): Promise<void> => {
   try {
     const { symbol } = req.params;
     const market = req.query.market as string | undefined;
     
     if (!symbol || symbol.length < 1) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           code: 'INVALID_SYMBOL',
@@ -63,6 +64,7 @@ router.get('/price/:symbol', async (req: Request, res: Response) => {
         },
         timestamp: new Date().toISOString(),
       });
+      return;
     }
 
     const alphaKey = req.query.alphaKey as string | undefined;
@@ -91,12 +93,12 @@ router.get('/price/:symbol', async (req: Request, res: Response) => {
  * POST /api/stocks/batch-price
  * Body: { symbols: ['005930', '000660'] }
  */
-router.post('/batch-price', async (req: Request, res: Response) => {
+router.post('/batch-price', async (req: Request, res: Response): Promise<void> => {
   try {
     const { symbols } = req.body;
     
     if (!Array.isArray(symbols) || symbols.length === 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           code: 'INVALID_REQUEST',
@@ -104,10 +106,11 @@ router.post('/batch-price', async (req: Request, res: Response) => {
         },
         timestamp: new Date().toISOString(),
       });
+      return;
     }
 
     if (symbols.length > 20) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           code: 'TOO_MANY_SYMBOLS',
@@ -115,6 +118,7 @@ router.post('/batch-price', async (req: Request, res: Response) => {
         },
         timestamp: new Date().toISOString(),
       });
+      return;
     }
 
     const stockInfos = await getBatchCurrentPrices(symbols);

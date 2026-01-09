@@ -26,12 +26,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/stocks', stockRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // 에러 핸들링 미들웨어
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Error:', err);
   res.status(500).json({
     success: false,
@@ -44,7 +44,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // 404 핸들러
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({
     success: false,
     error: {

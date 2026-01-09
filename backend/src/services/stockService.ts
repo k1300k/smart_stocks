@@ -3,7 +3,6 @@
  * 한국투자증권 API 및 대체 API 연동
  */
 
-import axios from 'axios';
 import { searchKoreanStocks, getKoreanStockPrice, isKISConfigured } from './kisApiService';
 import { searchForeignStocks, getForeignStockPrice, isAlphaVantageConfigured } from './alphaVantageService';
 
@@ -134,9 +133,17 @@ export async function getCurrentPrice(symbol: string, market?: string, alphaKey?
     
     // API 결과가 있으면 반환
     if (apiResult) {
+      // 로컬 데이터에서 이름 찾기
+      let stockName = symbol;
+      const localStock = getMajorStocks().find(s => s.symbol === symbol) || 
+                        getForeignStocks().find(s => s.symbol === symbol);
+      if (localStock) {
+        stockName = localStock.name;
+      }
+      
       return {
         symbol: apiResult.symbol,
-        name: apiResult.name || symbol,
+        name: stockName,
         currentPrice: apiResult.currentPrice,
         changeRate: apiResult.changeRate,
         changeAmount: apiResult.changeAmount,
