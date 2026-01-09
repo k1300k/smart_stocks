@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { Holding } from '../../types';
 import { usePortfolioStore } from '../../stores/portfolioStore';
+import StockSearchInput from './StockSearchInput';
 
 interface StockInputFormProps {
   onClose: () => void;
@@ -110,21 +111,46 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* 종목 코드 */}
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">
-            종목 코드 *
-          </label>
-          <input
-            type="text"
-            value={formData.symbol}
-            onChange={e => setFormData({ ...formData, symbol: e.target.value })}
-            placeholder="005930"
-            required
-            disabled={isEditing}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:bg-gray-100"
-          />
-        </div>
+        {/* 종목 검색 (수정 모드가 아닐 때만) */}
+        {!isEditing && (
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">
+              종목 검색 *
+            </label>
+            <StockSearchInput
+              onSelect={(stock, currentPrice) => {
+                setFormData({
+                  ...formData,
+                  symbol: stock.symbol,
+                  name: stock.name,
+                  currentPrice: currentPrice,
+                  sector: stock.sector || formData.sector,
+                });
+              }}
+            />
+            <p className="mt-1 text-xs text-text-tertiary">
+              종목명 또는 종목 코드로 검색하세요
+            </p>
+          </div>
+        )}
+
+        {/* 종목 코드 (수정 모드일 때만 표시) */}
+        {isEditing && (
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">
+              종목 코드 *
+            </label>
+            <input
+              type="text"
+              value={formData.symbol}
+              onChange={e => setFormData({ ...formData, symbol: e.target.value })}
+              placeholder="005930"
+              required
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:bg-gray-100"
+            />
+          </div>
+        )}
 
         {/* 종목명 */}
         <div>
@@ -179,15 +205,37 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
           <label className="block text-sm font-medium text-text-secondary mb-1">
             현재가 (원) *
           </label>
-          <input
-            type="number"
-            value={formData.currentPrice || ''}
-            onChange={e => setFormData({ ...formData, currentPrice: Number(e.target.value) })}
-            placeholder="70000"
-            required
-            min="0"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
-          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              value={formData.currentPrice || ''}
+              onChange={e => setFormData({ ...formData, currentPrice: Number(e.target.value) })}
+              placeholder="70000"
+              required
+              min="0"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
+            />
+            {formData.symbol && !isEditing && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const { getCurrentPrice } = await import('../../services/stockApi');
+                    const stockInfo = await getCurrentPrice(formData.symbol);
+                    setFormData({
+                      ...formData,
+                      currentPrice: stockInfo.currentPrice,
+                    });
+                  } catch (error) {
+                    alert('현재가를 가져오는 중 오류가 발생했습니다.');
+                  }
+                }}
+                className="px-4 py-2 bg-primary-blue text-white rounded-md hover:bg-blue-600 text-sm whitespace-nowrap"
+              >
+                가격 조회
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 섹터 */}
