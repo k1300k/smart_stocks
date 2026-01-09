@@ -10,6 +10,7 @@ interface PortfolioState {
   addHolding: (holding: Holding) => void;
   updateHolding: (symbol: string, holding: Partial<Holding>) => void;
   removeHolding: (symbol: string) => void;
+  setHoldings: (holdings: Holding[]) => void;
   updatePortfolio: (portfolio: Partial<Portfolio>) => void;
   calculateTotalValue: () => number;
   calculateTotalProfitLoss: () => number;
@@ -137,6 +138,21 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
         portfolio: {
           ...state.portfolio,
           holdings: newHoldings,
+          totalValue,
+          totalProfitLoss,
+        },
+      };
+    });
+  },
+
+  setHoldings: (holdings: Holding[]) => {
+    set(state => {
+      const totalValue = calculateValue(holdings);
+      const totalProfitLoss = calculateProfitLoss(holdings);
+      return {
+        portfolio: {
+          ...state.portfolio,
+          holdings,
           totalValue,
           totalProfitLoss,
         },

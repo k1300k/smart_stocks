@@ -6,11 +6,13 @@ import { useState } from 'react';
 import { Holding } from '../../types';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import StockInputForm from './StockInputForm';
+import ExportImportModal from './ExportImportModal';
 import { getColorByProfitLoss } from '../../services/portfolioTransform';
 
 export default function PortfolioList() {
   const { portfolio, removeHolding } = usePortfolioStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isExportImportOpen, setIsExportImportOpen] = useState(false);
   const [editingHolding, setEditingHolding] = useState<Holding | undefined>();
 
   const handleEdit = (holding: Holding) => {
@@ -41,12 +43,20 @@ export default function PortfolioList() {
     <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-text-primary">포트폴리오</h2>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-primary-blue text-white rounded-md hover:bg-blue-600 text-sm font-medium"
-        >
-          + 종목 추가
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsExportImportOpen(true)}
+            className="px-4 py-2 border border-gray-300 text-text-secondary rounded-md hover:bg-bg-secondary text-sm font-medium"
+          >
+            내보내기/불러오기
+          </button>
+          <button
+            onClick={handleAdd}
+            className="px-4 py-2 bg-primary-blue text-white rounded-md hover:bg-blue-600 text-sm font-medium"
+          >
+            + 종목 추가
+          </button>
+        </div>
       </div>
 
       {/* 포트폴리오 요약 */}
@@ -193,6 +203,12 @@ export default function PortfolioList() {
           <StockInputForm onClose={handleCloseForm} editingHolding={editingHolding} />
         </div>
       )}
+
+      {/* 내보내기/불러오기 모달 */}
+      <ExportImportModal
+        isOpen={isExportImportOpen}
+        onClose={() => setIsExportImportOpen(false)}
+      />
     </div>
   );
 }
