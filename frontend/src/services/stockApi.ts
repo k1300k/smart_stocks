@@ -11,6 +11,7 @@ export interface StockSearchResult {
   name: string;
   market: string;
   sector?: string;
+  nameKo?: string; // 한글 이름
 }
 
 export interface StockInfo {

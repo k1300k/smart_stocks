@@ -149,8 +149,8 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
             market === 'KRX'
               ? '종목명 또는 종목 코드 검색 (예: 삼성전자, 005930)'
               : market === 'NYSE'
-              ? '종목명 또는 심볼 검색 (예: Apple, AAPL)'
-              : '종목명 또는 코드 검색 (예: 삼성전자, Apple, AAPL)'
+              ? '종목명 또는 심볼 검색 (예: Apple, AAPL, 애플)'
+              : '종목명 또는 코드 검색 (예: 삼성전자, Apple, 애플, AAPL)'
           }
           disabled={disabled}
           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:bg-gray-100"
@@ -183,7 +183,9 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-text-primary">{stock.name}</div>
+                  <div className="font-medium text-text-primary">
+                    {stock.nameKo ? `${stock.nameKo} (${stock.name})` : stock.name}
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-text-secondary font-mono">{stock.symbol}</span>
                     <span className="text-xs px-1.5 py-0.5 bg-primary-blue bg-opacity-10 text-primary-blue rounded">

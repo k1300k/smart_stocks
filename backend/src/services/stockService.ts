@@ -21,6 +21,7 @@ interface StockSearchResult {
   name: string;
   market: string;
   sector?: string;
+  nameKo?: string; // 한글 이름
 }
 
 /**
@@ -45,13 +46,16 @@ export async function searchStocks(query: string, market?: string): Promise<Stoc
       stocks = stocks.concat(getForeignStocks());
     }
     
-    // 검색 필터링
+    // 검색 필터링 (한글 이름 포함)
+    const queryLower = query.toLowerCase();
     const filtered = stocks.filter(
-      stock =>
-        stock.name.includes(query) ||
-        stock.symbol.includes(query) ||
-        stock.name.toLowerCase().includes(query.toLowerCase()) ||
-        stock.symbol.toLowerCase().includes(query.toLowerCase())
+      stock => {
+        const nameMatch = stock.name.toLowerCase().includes(queryLower);
+        const symbolMatch = stock.symbol.toLowerCase().includes(queryLower);
+        const nameKoMatch = (stock as any).nameKo && (stock as any).nameKo.includes(query);
+        
+        return nameMatch || symbolMatch || nameKoMatch;
+      }
     );
 
     return filtered.slice(0, 10); // 최대 10개 반환
@@ -145,31 +149,47 @@ function getMajorStocks(): Array<{ symbol: string; name: string; market: string;
 }
 
 /**
- * 해외 주요 주식 목록
+ * 해외 주요 주식 목록 (한글 이름 포함)
  */
-function getForeignStocks(): Array<{ symbol: string; name: string; market: string; sector?: string }> {
-  return [
-    { symbol: 'AAPL', name: 'Apple Inc.', market: 'NASDAQ', sector: 'IT' },
-    { symbol: 'MSFT', name: 'Microsoft Corporation', market: 'NASDAQ', sector: 'IT' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', market: 'NASDAQ', sector: 'IT' },
-    { symbol: 'AMZN', name: 'Amazon.com Inc.', market: 'NASDAQ', sector: '소비재' },
-    { symbol: 'TSLA', name: 'Tesla, Inc.', market: 'NASDAQ', sector: '자동차' },
-    { symbol: 'META', name: 'Meta Platforms Inc.', market: 'NASDAQ', sector: 'IT' },
-    { symbol: 'NVDA', name: 'NVIDIA Corporation', market: 'NASDAQ', sector: 'IT' },
-    { symbol: 'JPM', name: 'JPMorgan Chase & Co.', market: 'NYSE', sector: '금융' },
-    { symbol: 'V', name: 'Visa Inc.', market: 'NYSE', sector: '금융' },
-    { symbol: 'JNJ', name: 'Johnson & Johnson', market: 'NYSE', sector: '바이오' },
-    { symbol: 'WMT', name: 'Walmart Inc.', market: 'NYSE', sector: '유통' },
-    { symbol: 'PG', name: 'Procter & Gamble Co.', market: 'NYSE', sector: '소비재' },
-    { symbol: 'MA', name: 'Mastercard Inc.', market: 'NYSE', sector: '금융' },
-    { symbol: 'UNH', name: 'UnitedHealth Group Inc.', market: 'NYSE', sector: '의료' },
-    { symbol: 'HD', name: 'The Home Depot, Inc.', market: 'NYSE', sector: '소비재' },
-    { symbol: 'DIS', name: 'The Walt Disney Company', market: 'NYSE', sector: '엔터테인먼트' },
-    { symbol: 'BAC', name: 'Bank of America Corp.', market: 'NYSE', sector: '금융' },
-    { symbol: 'XOM', name: 'Exxon Mobil Corporation', market: 'NYSE', sector: '에너지' },
-    { symbol: 'CVX', name: 'Chevron Corporation', market: 'NYSE', sector: '에너지' },
-    { symbol: 'NFLX', name: 'Netflix, Inc.', market: 'NASDAQ', sector: '엔터테인먼트' },
+interface ForeignStock {
+  symbol: string;
+  name: string;
+  nameKo: string; // 한글 이름
+  market: string;
+  sector?: string;
+}
+
+function getForeignStocks(): Array<{ symbol: string; name: string; market: string; sector?: string; nameKo?: string }> {
+  const stocks: ForeignStock[] = [
+    { symbol: 'AAPL', name: 'Apple Inc.', nameKo: '애플', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'MSFT', name: 'Microsoft Corporation', nameKo: '마이크로소프트', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'GOOGL', name: 'Alphabet Inc.', nameKo: '구글', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'AMZN', name: 'Amazon.com Inc.', nameKo: '아마존', market: 'NASDAQ', sector: '소비재' },
+    { symbol: 'TSLA', name: 'Tesla, Inc.', nameKo: '테슬라', market: 'NASDAQ', sector: '자동차' },
+    { symbol: 'META', name: 'Meta Platforms Inc.', nameKo: '메타', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'NVDA', name: 'NVIDIA Corporation', nameKo: '엔비디아', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'JPM', name: 'JPMorgan Chase & Co.', nameKo: 'JP모건', market: 'NYSE', sector: '금융' },
+    { symbol: 'V', name: 'Visa Inc.', nameKo: '비자', market: 'NYSE', sector: '금융' },
+    { symbol: 'JNJ', name: 'Johnson & Johnson', nameKo: '존슨앤존슨', market: 'NYSE', sector: '바이오' },
+    { symbol: 'WMT', name: 'Walmart Inc.', nameKo: '월마트', market: 'NYSE', sector: '유통' },
+    { symbol: 'PG', name: 'Procter & Gamble Co.', nameKo: 'P&G', market: 'NYSE', sector: '소비재' },
+    { symbol: 'MA', name: 'Mastercard Inc.', nameKo: '마스터카드', market: 'NYSE', sector: '금융' },
+    { symbol: 'UNH', name: 'UnitedHealth Group Inc.', nameKo: '유나이티드헬스', market: 'NYSE', sector: '의료' },
+    { symbol: 'HD', name: 'The Home Depot, Inc.', nameKo: '홈디포', market: 'NYSE', sector: '소비재' },
+    { symbol: 'DIS', name: 'The Walt Disney Company', nameKo: '월트디즈니', market: 'NYSE', sector: '엔터테인먼트' },
+    { symbol: 'BAC', name: 'Bank of America Corp.', nameKo: '뱅크오브아메리카', market: 'NYSE', sector: '금융' },
+    { symbol: 'XOM', name: 'Exxon Mobil Corporation', nameKo: '엑슨모빌', market: 'NYSE', sector: '에너지' },
+    { symbol: 'CVX', name: 'Chevron Corporation', nameKo: '셰브론', market: 'NYSE', sector: '에너지' },
+    { symbol: 'NFLX', name: 'Netflix, Inc.', nameKo: '넷플릭스', market: 'NASDAQ', sector: '엔터테인먼트' },
   ];
+  
+  return stocks.map(stock => ({
+    symbol: stock.symbol,
+    name: stock.name,
+    market: stock.market,
+    sector: stock.sector,
+    nameKo: stock.nameKo,
+  }));
 }
 
 /**
