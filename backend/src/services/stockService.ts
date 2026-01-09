@@ -4,6 +4,8 @@
  */
 
 import axios from 'axios';
+import { searchKoreanStocks, getKoreanStockPrice, isKISConfigured } from './kisApiService';
+import { searchForeignStocks, getForeignStockPrice, isAlphaVantageConfigured } from './alphaVantageService';
 
 interface StockInfo {
   symbol: string;
@@ -33,50 +35,69 @@ export async function searchStocks(query: string, market?: string): Promise<Stoc
   }
 
   try {
-    let stocks: Array<{ symbol: string; name: string; market: string; sector?: string }> = [];
+    let apiResults: StockSearchResult[] = [];
+    let localResults: Array<{ symbol: string; name: string; market: string; sector?: string }> = [];
     
-    // 시장별로 필터링
+    // 실제 API 사용 시도
     if (market === 'KRX' || !market) {
-      // 국내 주식
-      stocks = stocks.concat(getMajorStocks());
+      // 국내 주식 - KIS API
+      if (isKISConfigured()) {
+        try {
+          const kisResults = await searchKoreanStocks(query);
+          apiResults = apiResults.concat(kisResults);
+        } catch (error) {
+          console.error('KIS API error, using fallback:', error);
+        }
+      }
+      // Fallback: 로컬 데이터
+      localResults = localResults.concat(getMajorStocks());
     }
     
     if (market === 'NYSE' || market === 'NASDAQ' || !market) {
-      // 해외 주식
-      stocks = stocks.concat(getForeignStocks());
+      // 해외 주식 - Alpha Vantage API
+      if (isAlphaVantageConfigured()) {
+        try {
+          const foreignResults = await searchForeignStocks(query);
+          apiResults = apiResults.concat(foreignResults);
+        } catch (error) {
+          console.error('Alpha Vantage API error, using fallback:', error);
+        }
+      }
+      // Fallback: 로컬 데이터
+      localResults = localResults.concat(getForeignStocks());
     }
     
-    // 검색 필터링 (한글 이름, 티커 우선 검색)
-    const queryLower = query.toUpperCase().trim(); // 티커는 대문자로 변환
-    const queryLowerForName = query.toLowerCase();
+    // API 결과가 있으면 우선 사용, 없으면 로컬 데이터 사용
+    let stocks = apiResults.length > 0 ? apiResults : localResults;
     
-    const filtered = stocks
-      .map(stock => {
-        const stockAny = stock as any;
-        // 티커 정확 매칭 (해외주식 우선)
-        const exactSymbolMatch = stock.market !== 'KRX' && stock.symbol === queryLower;
-        // 티커 부분 매칭
-        const symbolMatch = stock.symbol.toUpperCase().includes(queryLower);
-        // 이름 매칭
-        const nameMatch = stock.name.toLowerCase().includes(queryLowerForName);
-        // 한글 이름 매칭
-        const nameKoMatch = stockAny.nameKo && stockAny.nameKo.includes(query);
-        
-        // 우선순위 점수 계산
-        let score = 0;
-        if (exactSymbolMatch) score = 100; // 티커 정확 매칭 최우선
-        else if (symbolMatch && stock.market !== 'KRX') score = 80; // 해외 티커 부분 매칭
-        else if (symbolMatch) score = 50; // 국내 종목 코드 매칭
-        else if (nameKoMatch) score = 40; // 한글 이름 매칭
-        else if (nameMatch) score = 30; // 영문 이름 매칭
-        
-        return { stock, score, matches: exactSymbolMatch || symbolMatch || nameMatch || nameKoMatch };
-      })
-      .filter(item => item.matches)
-      .sort((a, b) => b.score - a.score) // 점수 높은 순으로 정렬
-      .map(item => item.stock);
+    // 로컬 검색 필터링 (API 결과가 없을 때)
+    if (apiResults.length === 0) {
+      const queryLower = query.toUpperCase().trim();
+      const queryLowerForName = query.toLowerCase();
+      
+      stocks = (stocks as any[])
+        .map(stock => {
+          const stockAny = stock as any;
+          const exactSymbolMatch = stock.market !== 'KRX' && stock.symbol === queryLower;
+          const symbolMatch = stock.symbol.toUpperCase().includes(queryLower);
+          const nameMatch = stock.name.toLowerCase().includes(queryLowerForName);
+          const nameKoMatch = stockAny.nameKo && stockAny.nameKo.includes(query);
+          
+          let score = 0;
+          if (exactSymbolMatch) score = 100;
+          else if (symbolMatch && stock.market !== 'KRX') score = 80;
+          else if (symbolMatch) score = 50;
+          else if (nameKoMatch) score = 40;
+          else if (nameMatch) score = 30;
+          
+          return { stock, score, matches: exactSymbolMatch || symbolMatch || nameMatch || nameKoMatch };
+        })
+        .filter(item => item.matches)
+        .sort((a, b) => b.score - a.score)
+        .map(item => item.stock);
+    }
 
-    return filtered.slice(0, 10); // 최대 10개 반환
+    return stocks.slice(0, 10);
   } catch (error) {
     console.error('Stock search error:', error);
     throw new Error('종목 검색 중 오류가 발생했습니다.');
@@ -88,15 +109,42 @@ export async function searchStocks(query: string, market?: string): Promise<Stoc
  */
 export async function getCurrentPrice(symbol: string, market?: string): Promise<StockInfo> {
   try {
-    // 한국투자증권 API 사용 (실제 구현 필요)
-    // 여기서는 샘플 데이터 반환
+    let apiResult = null;
     
-    // 실제 구현 시:
-    // 1. 한국투자증권 API 토큰 발급
-    // 2. 현재가 조회 API 호출
-    // 3. Redis 캐싱 (1분 간격)
+    // 실제 API 호출 시도
+    if (market === 'KRX' || (!market && /^\d{6}$/.test(symbol))) {
+      // 국내 주식
+      if (isKISConfigured()) {
+        try {
+          apiResult = await getKoreanStockPrice(symbol);
+        } catch (error) {
+          console.error('KIS API error, using fallback:', error);
+        }
+      }
+    } else {
+      // 해외 주식
+      if (isAlphaVantageConfigured()) {
+        try {
+          apiResult = await getForeignStockPrice(symbol);
+        } catch (error) {
+          console.error('Alpha Vantage API error, using fallback:', error);
+        }
+      }
+    }
     
-    // 임시로 샘플 데이터 반환
+    // API 결과가 있으면 반환
+    if (apiResult) {
+      return {
+        symbol: apiResult.symbol,
+        name: apiResult.name || symbol,
+        currentPrice: apiResult.currentPrice,
+        changeRate: apiResult.changeRate,
+        changeAmount: apiResult.changeAmount,
+        volume: apiResult.volume,
+      };
+    }
+    
+    // Fallback: 로컬 데이터 사용
     let stock = getMajorStocks().find(s => s.symbol === symbol);
     if (!stock) {
       stock = getForeignStocks().find(s => s.symbol === symbol);
@@ -106,10 +154,8 @@ export async function getCurrentPrice(symbol: string, market?: string): Promise<
       throw new Error('종목을 찾을 수 없습니다.');
     }
 
-    // 실제 가격은 API에서 가져와야 함
-    // 여기서는 랜덤 가격 생성 (개발용)
     const basePrice = getBasePrice(symbol, stock.market);
-    const changeRate = (Math.random() - 0.5) * 10; // -5% ~ +5%
+    const changeRate = (Math.random() - 0.5) * 10;
     const currentPrice = Number((basePrice * (1 + changeRate / 100)).toFixed(2));
     const changeAmount = Number((currentPrice - basePrice).toFixed(2));
 
