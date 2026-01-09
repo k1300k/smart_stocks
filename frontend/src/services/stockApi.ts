@@ -37,15 +37,20 @@ export interface ApiResponse<T> {
 /**
  * 종목 검색
  */
-export async function searchStocks(query: string): Promise<StockSearchResult[]> {
+export async function searchStocks(query: string, market?: string): Promise<StockSearchResult[]> {
   if (!query || query.trim().length < 2) {
     return [];
   }
 
   try {
+    const params: { q: string; market?: string } = { q: query.trim() };
+    if (market) {
+      params.market = market;
+    }
+
     const response = await axios.get<ApiResponse<StockSearchResult[]>>(
       `${API_BASE_URL}/stocks/search`,
-      { params: { q: query.trim() } }
+      { params }
     );
 
     if (response.data.success) {
@@ -61,10 +66,16 @@ export async function searchStocks(query: string): Promise<StockSearchResult[]> 
 /**
  * 현재가 조회
  */
-export async function getCurrentPrice(symbol: string): Promise<StockInfo> {
+export async function getCurrentPrice(symbol: string, market?: string): Promise<StockInfo> {
   try {
+    const params: { market?: string } = {};
+    if (market) {
+      params.market = market;
+    }
+
     const response = await axios.get<ApiResponse<StockInfo>>(
-      `${API_BASE_URL}/stocks/price/${symbol}`
+      `${API_BASE_URL}/stocks/price/${symbol}`,
+      { params }
     );
 
     if (response.data.success) {

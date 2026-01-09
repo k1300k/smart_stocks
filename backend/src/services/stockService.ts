@@ -24,27 +24,34 @@ interface StockSearchResult {
 }
 
 /**
- * 종목 검색 (한국 주식)
+ * 종목 검색 (국내/해외 주식)
  */
-export async function searchStocks(query: string): Promise<StockSearchResult[]> {
+export async function searchStocks(query: string, market?: string): Promise<StockSearchResult[]> {
   if (!query || query.length < 2) {
     return [];
   }
 
   try {
-    // 한국투자증권 API 또는 대체 API 사용
-    // 여기서는 샘플 데이터와 공개 API를 조합하여 사용
+    let stocks: Array<{ symbol: string; name: string; market: string; sector?: string }> = [];
     
-    // 실제로는 한국투자증권 API를 사용하거나
-    // 공개 주식 검색 API를 사용해야 함
+    // 시장별로 필터링
+    if (market === 'KRX' || !market) {
+      // 국내 주식
+      stocks = stocks.concat(getMajorStocks());
+    }
     
-    // 임시로 주요 종목 목록에서 검색
-    const majorStocks = getMajorStocks();
-    const filtered = majorStocks.filter(
+    if (market === 'NYSE' || market === 'NASDAQ' || !market) {
+      // 해외 주식
+      stocks = stocks.concat(getForeignStocks());
+    }
+    
+    // 검색 필터링
+    const filtered = stocks.filter(
       stock =>
         stock.name.includes(query) ||
         stock.symbol.includes(query) ||
-        stock.name.toLowerCase().includes(query.toLowerCase())
+        stock.name.toLowerCase().includes(query.toLowerCase()) ||
+        stock.symbol.toLowerCase().includes(query.toLowerCase())
     );
 
     return filtered.slice(0, 10); // 최대 10개 반환
@@ -57,7 +64,7 @@ export async function searchStocks(query: string): Promise<StockSearchResult[]> 
 /**
  * 현재가 조회
  */
-export async function getCurrentPrice(symbol: string): Promise<StockInfo> {
+export async function getCurrentPrice(symbol: string, market?: string): Promise<StockInfo> {
   try {
     // 한국투자증권 API 사용 (실제 구현 필요)
     // 여기서는 샘플 데이터 반환
@@ -68,17 +75,21 @@ export async function getCurrentPrice(symbol: string): Promise<StockInfo> {
     // 3. Redis 캐싱 (1분 간격)
     
     // 임시로 샘플 데이터 반환
-    const stock = getMajorStocks().find(s => s.symbol === symbol);
+    let stock = getMajorStocks().find(s => s.symbol === symbol);
+    if (!stock) {
+      stock = getForeignStocks().find(s => s.symbol === symbol);
+    }
+    
     if (!stock) {
       throw new Error('종목을 찾을 수 없습니다.');
     }
 
     // 실제 가격은 API에서 가져와야 함
     // 여기서는 랜덤 가격 생성 (개발용)
-    const basePrice = getBasePrice(symbol);
+    const basePrice = getBasePrice(symbol, stock.market);
     const changeRate = (Math.random() - 0.5) * 10; // -5% ~ +5%
-    const currentPrice = Math.round(basePrice * (1 + changeRate / 100));
-    const changeAmount = currentPrice - basePrice;
+    const currentPrice = Number((basePrice * (1 + changeRate / 100)).toFixed(2));
+    const changeAmount = Number((currentPrice - basePrice).toFixed(2));
 
     return {
       symbol,
@@ -98,8 +109,10 @@ export async function getCurrentPrice(symbol: string): Promise<StockInfo> {
 /**
  * 여러 종목의 현재가 일괄 조회
  */
-export async function getBatchCurrentPrices(symbols: string[]): Promise<StockInfo[]> {
-  const promises = symbols.map(symbol => getCurrentPrice(symbol));
+export async function getBatchCurrentPrices(symbols: string[], markets?: string[]): Promise<StockInfo[]> {
+  const promises = symbols.map((symbol, index) => 
+    getCurrentPrice(symbol, markets?.[index])
+  );
   return Promise.all(promises);
 }
 
@@ -132,10 +145,39 @@ function getMajorStocks(): Array<{ symbol: string; name: string; market: string;
 }
 
 /**
+ * 해외 주요 주식 목록
+ */
+function getForeignStocks(): Array<{ symbol: string; name: string; market: string; sector?: string }> {
+  return [
+    { symbol: 'AAPL', name: 'Apple Inc.', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'MSFT', name: 'Microsoft Corporation', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'GOOGL', name: 'Alphabet Inc.', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'AMZN', name: 'Amazon.com Inc.', market: 'NASDAQ', sector: '소비재' },
+    { symbol: 'TSLA', name: 'Tesla, Inc.', market: 'NASDAQ', sector: '자동차' },
+    { symbol: 'META', name: 'Meta Platforms Inc.', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'NVDA', name: 'NVIDIA Corporation', market: 'NASDAQ', sector: 'IT' },
+    { symbol: 'JPM', name: 'JPMorgan Chase & Co.', market: 'NYSE', sector: '금융' },
+    { symbol: 'V', name: 'Visa Inc.', market: 'NYSE', sector: '금융' },
+    { symbol: 'JNJ', name: 'Johnson & Johnson', market: 'NYSE', sector: '바이오' },
+    { symbol: 'WMT', name: 'Walmart Inc.', market: 'NYSE', sector: '유통' },
+    { symbol: 'PG', name: 'Procter & Gamble Co.', market: 'NYSE', sector: '소비재' },
+    { symbol: 'MA', name: 'Mastercard Inc.', market: 'NYSE', sector: '금융' },
+    { symbol: 'UNH', name: 'UnitedHealth Group Inc.', market: 'NYSE', sector: '의료' },
+    { symbol: 'HD', name: 'The Home Depot, Inc.', market: 'NYSE', sector: '소비재' },
+    { symbol: 'DIS', name: 'The Walt Disney Company', market: 'NYSE', sector: '엔터테인먼트' },
+    { symbol: 'BAC', name: 'Bank of America Corp.', market: 'NYSE', sector: '금융' },
+    { symbol: 'XOM', name: 'Exxon Mobil Corporation', market: 'NYSE', sector: '에너지' },
+    { symbol: 'CVX', name: 'Chevron Corporation', market: 'NYSE', sector: '에너지' },
+    { symbol: 'NFLX', name: 'Netflix, Inc.', market: 'NASDAQ', sector: '엔터테인먼트' },
+  ];
+}
+
+/**
  * 종목별 기준 가격 (실제로는 API에서 가져와야 함)
  */
-function getBasePrice(symbol: string): number {
-  const priceMap: Record<string, number> = {
+function getBasePrice(symbol: string, market?: string): number {
+  // 국내 주식 가격 (원)
+  const krxPriceMap: Record<string, number> = {
     '005930': 70000, // 삼성전자
     '000660': 135000, // SK하이닉스
     '035420': 220000, // NAVER
@@ -157,5 +199,34 @@ function getBasePrice(symbol: string): number {
     '030200': 30000, // KT
     '018260': 150000, // 삼성에스디에스
   };
-  return priceMap[symbol] || 50000;
+  
+  // 해외 주식 가격 (달러)
+  const foreignPriceMap: Record<string, number> = {
+    'AAPL': 180, // Apple
+    'MSFT': 380, // Microsoft
+    'GOOGL': 140, // Alphabet
+    'AMZN': 150, // Amazon
+    'TSLA': 250, // Tesla
+    'META': 350, // Meta
+    'NVDA': 500, // NVIDIA
+    'JPM': 150, // JPMorgan
+    'V': 250, // Visa
+    'JNJ': 160, // Johnson & Johnson
+    'WMT': 160, // Walmart
+    'PG': 150, // Procter & Gamble
+    'MA': 400, // Mastercard
+    'UNH': 500, // UnitedHealth
+    'HD': 350, // Home Depot
+    'DIS': 100, // Disney
+    'BAC': 35, // Bank of America
+    'XOM': 110, // Exxon Mobil
+    'CVX': 150, // Chevron
+    'NFLX': 450, // Netflix
+  };
+  
+  if (market === 'KRX' || (!market && krxPriceMap[symbol])) {
+    return krxPriceMap[symbol] || 50000;
+  }
+  
+  return foreignPriceMap[symbol] || 100;
 }

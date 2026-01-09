@@ -221,7 +221,9 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
                 onClick={async () => {
                   try {
                     const { getCurrentPrice } = await import('../../services/stockApi');
-                    const stockInfo = await getCurrentPrice(formData.symbol);
+                    // 시장 구분: 6자리 숫자는 국내, 그 외는 해외로 간주
+                    const market = /^\d{6}$/.test(formData.symbol) ? 'KRX' : undefined;
+                    const stockInfo = await getCurrentPrice(formData.symbol, market);
                     setFormData({
                       ...formData,
                       currentPrice: stockInfo.currentPrice,

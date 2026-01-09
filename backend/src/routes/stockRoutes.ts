@@ -9,11 +9,12 @@ const router = Router();
 
 /**
  * 종목 검색
- * GET /api/stocks/search?q=삼성
+ * GET /api/stocks/search?q=삼성&market=KRX
  */
 router.get('/search', async (req: Request, res: Response) => {
   try {
     const query = req.query.q as string;
+    const market = req.query.market as string | undefined;
     
     if (!query || query.trim().length < 2) {
       return res.json({
@@ -23,7 +24,7 @@ router.get('/search', async (req: Request, res: Response) => {
       });
     }
 
-    const results = await searchStocks(query.trim());
+    const results = await searchStocks(query.trim(), market);
     
     res.json({
       success: true,
@@ -45,24 +46,25 @@ router.get('/search', async (req: Request, res: Response) => {
 
 /**
  * 현재가 조회
- * GET /api/stocks/price/:symbol
+ * GET /api/stocks/price/:symbol?market=KRX
  */
 router.get('/price/:symbol', async (req: Request, res: Response) => {
   try {
     const { symbol } = req.params;
+    const market = req.query.market as string | undefined;
     
-    if (!symbol || symbol.length !== 6) {
+    if (!symbol || symbol.length < 1) {
       return res.status(400).json({
         success: false,
         error: {
           code: 'INVALID_SYMBOL',
-          message: '올바른 종목 코드를 입력하세요 (6자리)',
+          message: '올바른 종목 코드를 입력하세요',
         },
         timestamp: new Date().toISOString(),
       });
     }
 
-    const stockInfo = await getCurrentPrice(symbol);
+    const stockInfo = await getCurrentPrice(symbol, market);
     
     res.json({
       success: true,

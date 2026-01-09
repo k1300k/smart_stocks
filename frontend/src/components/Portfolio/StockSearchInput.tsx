@@ -12,6 +12,7 @@ interface StockSearchInputProps {
 
 export default function StockSearchInput({ onSelect, disabled }: StockSearchInputProps) {
   const [query, setQuery] = useState('');
+  const [market, setMarket] = useState<string>(''); // '' = 전체, 'KRX' = 국내, 'NYSE'/'NASDAQ' = 해외
   const [results, setResults] = useState<StockSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -30,7 +31,7 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const searchResults = await searchStocks(query);
+        const searchResults = await searchStocks(query, market || undefined);
         setResults(searchResults);
         setShowResults(searchResults.length > 0);
         setSelectedIndex(-1);
@@ -44,7 +45,7 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, market]);
 
   // 외부 클릭 시 결과 숨기기
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
   const handleSelect = async (stock: StockSearchResult) => {
     try {
       setIsLoading(true);
-      const stockInfo = await getCurrentPrice(stock.symbol);
+      const stockInfo = await getCurrentPrice(stock.symbol, stock.market);
       onSelect(stock, stockInfo.currentPrice);
       setQuery(stock.name);
       setShowResults(false);
@@ -99,6 +100,43 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
 
   return (
     <div ref={searchRef} className="relative">
+      {/* 시장 선택 */}
+      <div className="flex gap-2 mb-2">
+        <button
+          type="button"
+          onClick={() => setMarket('')}
+          className={`px-3 py-1 text-sm rounded-md transition-colors ${
+            market === ''
+              ? 'bg-primary-blue text-white'
+              : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary'
+          }`}
+        >
+          전체
+        </button>
+        <button
+          type="button"
+          onClick={() => setMarket('KRX')}
+          className={`px-3 py-1 text-sm rounded-md transition-colors ${
+            market === 'KRX'
+              ? 'bg-primary-blue text-white'
+              : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary'
+          }`}
+        >
+          국내
+        </button>
+        <button
+          type="button"
+          onClick={() => setMarket('NYSE')}
+          className={`px-3 py-1 text-sm rounded-md transition-colors ${
+            market === 'NYSE'
+              ? 'bg-primary-blue text-white'
+              : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary'
+          }`}
+        >
+          해외
+        </button>
+      </div>
+
       <div className="relative">
         <input
           ref={inputRef}
@@ -107,7 +145,13 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
           onChange={e => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && results.length > 0 && setShowResults(true)}
           onKeyDown={handleKeyDown}
-          placeholder="종목명 또는 종목 코드 검색 (예: 삼성전자, 005930)"
+          placeholder={
+            market === 'KRX'
+              ? '종목명 또는 종목 코드 검색 (예: 삼성전자, 005930)'
+              : market === 'NYSE'
+              ? '종목명 또는 심볼 검색 (예: Apple, AAPL)'
+              : '종목명 또는 코드 검색 (예: 삼성전자, Apple, AAPL)'
+          }
           disabled={disabled}
           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:bg-gray-100"
         />
@@ -140,7 +184,12 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium text-text-primary">{stock.name}</div>
-                  <div className="text-sm text-text-secondary font-mono">{stock.symbol}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-text-secondary font-mono">{stock.symbol}</span>
+                    <span className="text-xs px-1.5 py-0.5 bg-primary-blue bg-opacity-10 text-primary-blue rounded">
+                      {stock.market}
+                    </span>
+                  </div>
                 </div>
                 {stock.sector && (
                   <span className="text-xs px-2 py-0.5 bg-bg-tertiary text-text-secondary rounded">
