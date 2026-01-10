@@ -8,11 +8,12 @@ import { usePortfolioStore } from '../../stores/portfolioStore';
 import StockInputForm from './StockInputForm';
 import ExportImportModal from './ExportImportModal';
 import { getColorByProfitLoss } from '../../services/portfolioTransform';
-import { formatCurrency, convertToKRW, getCurrentExchangeRate } from '../../utils/currency';
+import { formatCurrency, convertToKRW } from '../../utils/currency';
 import { useExchangeRateStore } from '../../stores/exchangeRateStore';
 
 export default function PortfolioList() {
   const { portfolio, removeHolding } = usePortfolioStore();
+  const { usdToKrwRate, lastUpdated } = useExchangeRateStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isExportImportOpen, setIsExportImportOpen] = useState(false);
   const [editingHolding, setEditingHolding] = useState<Holding | undefined>();
