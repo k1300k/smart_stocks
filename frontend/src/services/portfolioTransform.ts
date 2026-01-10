@@ -11,9 +11,21 @@ const MAX_NODE_SIZE = 80;
 /**
  * 노드 크기 계산
  * NodeSize = BaseSize * sqrt(StockValue / TotalPortfolioValue)
+ * 수익률별 뷰에서는 이익율 비율에 따라 크기 조정
  */
-function calculateNodeSize(value: number, totalValue: number): number {
+function calculateNodeSize(value: number, totalValue: number, profitLossRate?: number, viewMode?: 'profitLoss' | 'sector' | 'theme'): number {
   if (totalValue === 0) return MIN_NODE_SIZE;
+  
+  // 수익률별 뷰에서는 이익율 비율에 따라 크기 조정
+  if (viewMode === 'profitLoss' && profitLossRate !== undefined) {
+    // 이익율의 절대값을 기준으로 크기 계산 (최대 100% 기준)
+    const profitRateAbs = Math.abs(profitLossRate);
+    const profitRatio = Math.min(profitRateAbs / 100, 1); // 0~1 사이로 정규화
+    const size = BASE_NODE_SIZE + (MAX_NODE_SIZE - BASE_NODE_SIZE) * profitRatio;
+    return Math.max(MIN_NODE_SIZE, Math.min(MAX_NODE_SIZE, size));
+  }
+  
+  // 기본: 가치 비율에 따라 크기 계산
   const ratio = value / totalValue;
   const size = BASE_NODE_SIZE * Math.sqrt(ratio);
   return Math.max(MIN_NODE_SIZE, Math.min(MAX_NODE_SIZE, size));
@@ -21,22 +33,32 @@ function calculateNodeSize(value: number, totalValue: number): number {
 
 /**
  * 수익률에 따른 색상 계산
- * 수익 (+): Green 그라데이션 (#22C55E ~ #15803D)
+ * 수익 (+): Green 그라데이션 (#22C55E ~ #15803D) 또는 Blue 그라데이션 (#3B82F6 ~ #1E40AF)
  * 손실 (-): Red 그라데이션 (#EF4444 ~ #DC2626)
  * 보합 (0): Neutral Gray (#9CA3AF)
  */
-export function getColorByProfitLoss(profitLossRate?: number): string {
+export function getColorByProfitLoss(profitLossRate?: number, viewMode?: 'profitLoss' | 'sector' | 'theme'): string {
   if (profitLossRate === undefined || profitLossRate === 0) {
     return '#9CA3AF'; // Neutral Gray
   }
   
   if (profitLossRate > 0) {
-    // Green gradient: #22C55E to #15803D
-    const intensity = Math.min(profitLossRate / 50, 1); // 최대 50%까지 그라데이션
-    const r = Math.round(34 - (21 * intensity));
-    const g = Math.round(197 - (151 * intensity));
-    const b = Math.round(94 - (61 * intensity));
-    return `rgb(${r}, ${g}, ${b})`;
+    // 수익률별 뷰에서는 파란색, 다른 뷰에서는 녹색
+    if (viewMode === 'profitLoss') {
+      // Blue gradient: #3B82F6 to #1E40AF
+      const intensity = Math.min(profitLossRate / 50, 1); // 최대 50%까지 그라데이션
+      const r = Math.round(59 - (31 * intensity));
+      const g = Math.round(130 - (64 * intensity));
+      const b = Math.round(246 - (175 * intensity));
+      return `rgb(${r}, ${g}, ${b})`;
+    } else {
+      // Green gradient: #22C55E to #15803D
+      const intensity = Math.min(profitLossRate / 50, 1);
+      const r = Math.round(34 - (21 * intensity));
+      const g = Math.round(197 - (151 * intensity));
+      const b = Math.round(94 - (61 * intensity));
+      return `rgb(${r}, ${g}, ${b})`;
+    }
   } else {
     // Red gradient: #EF4444 to #DC2626
     const intensity = Math.min(Math.abs(profitLossRate) / 50, 1);
@@ -308,6 +330,6 @@ export function transformPortfolioToMindMap(
 /**
  * 노드 크기 계산 헬퍼
  */
-export function getNodeSize(node: MindMapNode, totalValue: number): number {
-  return calculateNodeSize(node.value, totalValue);
+export function getNodeSize(node: MindMapNode, totalValue: number, viewMode?: 'profitLoss' | 'sector' | 'theme'): number {
+  return calculateNodeSize(node.value, totalValue, node.profitLossRate, viewMode);
 }

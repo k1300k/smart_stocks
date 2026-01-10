@@ -52,7 +52,7 @@ export default function MindMapView({
     // 노드 크기 계산
     const totalValue = data.value || 1;
     nodes.forEach(node => {
-      const size = getNodeSize(node, totalValue);
+      const size = getNodeSize(node, totalValue, viewMode);
       node.radius = size;
     });
 
@@ -142,7 +142,7 @@ export default function MindMapView({
     node
       .append('circle')
       .attr('r', d => d.radius || 20)
-      .attr('fill', d => getColorByProfitLoss(d.profitLossRate))
+      .attr('fill', d => getColorByProfitLoss(d.profitLossRate, viewMode))
       .attr('stroke', '#FFFFFF')
       .attr('stroke-width', 2)
       .attr('opacity', d => (selectedNode?.id === d.id ? 1 : 0.8))
