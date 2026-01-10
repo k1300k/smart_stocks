@@ -79,6 +79,12 @@ function Dashboard() {
             >
               API 키 설정
             </button>
+            <button
+              onClick={() => setShowExchangeRateModal(true)}
+              className="px-4 py-2 rounded-md border border-gray-200 bg-white text-sm font-medium text-text-secondary transition hover:border-primary-blue hover:text-primary-blue"
+            >
+              환율 설정
+            </button>
             <ViewModeSelector currentMode={viewMode} onModeChange={setViewMode} />
             <button
               onClick={logout}
@@ -114,6 +120,7 @@ function Dashboard() {
       {/* 노드 상세 패널 */}
       <NodeDetailPanel node={selectedNode} onClose={handleClosePanel} />
       <ApiKeyModal isOpen={showApiKeyModal} onClose={() => setShowApiKeyModal(false)} />
+      <ExchangeRateModal isOpen={showExchangeRateModal} onClose={() => setShowExchangeRateModal(false)} />
     </div>
   );
 }
