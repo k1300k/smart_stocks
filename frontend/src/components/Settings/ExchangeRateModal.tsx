@@ -4,7 +4,6 @@
 
 import { useEffect, useState } from 'react';
 import { useExchangeRateStore } from '../../stores/exchangeRateStore';
-import { getUSDToKRWRate } from '../../services/exchangeRateApi';
 
 interface ExchangeRateModalProps {
   isOpen: boolean;
