@@ -2,7 +2,7 @@
  * 메인 App 컴포넌트
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MindMapView from './components/MindMap/MindMapView';
 import ViewModeSelector from './components/MindMap/ViewModeSelector';
@@ -12,6 +12,7 @@ import { ViewMode, MindMapNode } from './types';
 import { transformPortfolioToMindMap } from './services/portfolioTransform';
 import { usePortfolioStore } from './stores/portfolioStore';
 import { useAuthStore } from './stores/authStore';
+import { useExchangeRateStore } from './stores/exchangeRateStore';
 import ApiKeyModal from './components/Settings/ApiKeyModal';
 import AuthPage from './pages/AuthPage';
 
@@ -27,6 +28,19 @@ function Dashboard() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const portfolio = usePortfolioStore(state => state.portfolio);
   const { user, logout } = useAuthStore();
+  const { updateRate } = useExchangeRateStore();
+
+  // 앱 시작 시 환율 업데이트
+  useEffect(() => {
+    updateRate();
+    
+    // 1시간마다 환율 자동 업데이트
+    const interval = setInterval(() => {
+      updateRate();
+    }, 60 * 60 * 1000); // 1시간
+
+    return () => clearInterval(interval);
+  }, [updateRate]);
 
   // 포트폴리오 데이터를 마인드맵 노드로 변환
   const mindMapData = transformPortfolioToMindMap(portfolio, viewMode);

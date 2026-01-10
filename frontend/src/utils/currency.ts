@@ -3,10 +3,7 @@
  */
 
 import { Currency } from '../types';
-
-// USD to KRW 환율 (기본값: 1300원)
-// TODO: 나중에 실시간 환율 API 연동 가능
-export const USD_TO_KRW_RATE = 1300;
+import { useExchangeRateStore } from '../stores/exchangeRateStore';
 
 /**
  * 통화를 원화로 변환
@@ -15,7 +12,9 @@ export function convertToKRW(amount: number, currency: Currency): number {
   if (currency === 'KRW') {
     return amount;
   }
-  return amount * USD_TO_KRW_RATE;
+  // 실시간 환율 사용
+  const rate = useExchangeRateStore.getState().usdToKrwRate;
+  return amount * rate;
 }
 
 /**
@@ -25,7 +24,16 @@ export function convertFromKRW(amount: number, currency: Currency): number {
   if (currency === 'KRW') {
     return amount;
   }
-  return amount / USD_TO_KRW_RATE;
+  // 실시간 환율 사용
+  const rate = useExchangeRateStore.getState().usdToKrwRate;
+  return amount / rate;
+}
+
+/**
+ * 현재 USD to KRW 환율 가져오기
+ */
+export function getCurrentExchangeRate(): number {
+  return useExchangeRateStore.getState().usdToKrwRate;
 }
 
 /**

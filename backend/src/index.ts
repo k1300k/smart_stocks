@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import stockRoutes from './routes/stockRoutes';
 import authRoutes from './routes/authRoutes';
+import exchangeRateRoutes from './routes/exchangeRateRoutes';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 // 라우트
 app.use('/api/auth', authRoutes);
 app.use('/api/stocks', stockRoutes);
+app.use('/api/exchange-rate', exchangeRateRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {

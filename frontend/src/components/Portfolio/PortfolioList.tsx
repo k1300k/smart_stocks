@@ -8,7 +8,8 @@ import { usePortfolioStore } from '../../stores/portfolioStore';
 import StockInputForm from './StockInputForm';
 import ExportImportModal from './ExportImportModal';
 import { getColorByProfitLoss } from '../../services/portfolioTransform';
-import { formatCurrency, convertToKRW } from '../../utils/currency';
+import { formatCurrency, convertToKRW, getCurrentExchangeRate } from '../../utils/currency';
+import { useExchangeRateStore } from '../../stores/exchangeRateStore';
 
 export default function PortfolioList() {
   const { portfolio, removeHolding } = usePortfolioStore();
