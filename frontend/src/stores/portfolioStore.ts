@@ -6,7 +6,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Portfolio, Holding } from '../types';
-import { convertToKRW } from '../utils/currency';
+import { convertKrwToUsd } from '../utils/currency';
 
 interface PortfolioState {
   portfolio: Portfolio;
@@ -19,15 +19,18 @@ interface PortfolioState {
   calculateTotalProfitLoss: () => number;
 }
 
+const DEFAULT_USD_TO_KRW_RATE = 1300;
+
 // 초기 샘플 데이터
 const initialHoldings: Holding[] = [
   {
     symbol: '005930',
     name: '삼성전자',
     quantity: 100,
-    avgPrice: 65000,
-    currentPrice: 70000,
-    currency: 'KRW',
+    avgPriceKrw: 65000,
+    avgPriceUsd: Number(convertKrwToUsd(65000).toFixed(2)),
+    currentPriceKrw: 70000,
+    currentPriceUsd: Number(convertKrwToUsd(70000).toFixed(2)),
     sector: 'IT',
     tags: ['대형주', '배당주'],
   },
@@ -35,9 +38,10 @@ const initialHoldings: Holding[] = [
     symbol: '000660',
     name: 'SK하이닉스',
     quantity: 50,
-    avgPrice: 120000,
-    currentPrice: 135000,
-    currency: 'KRW',
+    avgPriceKrw: 120000,
+    avgPriceUsd: Number(convertKrwToUsd(120000).toFixed(2)),
+    currentPriceKrw: 135000,
+    currentPriceUsd: Number(convertKrwToUsd(135000).toFixed(2)),
     sector: 'IT',
     tags: ['반도체', 'AI'],
   },
@@ -45,9 +49,10 @@ const initialHoldings: Holding[] = [
     symbol: '035420',
     name: 'NAVER',
     quantity: 30,
-    avgPrice: 200000,
-    currentPrice: 220000,
-    currency: 'KRW',
+    avgPriceKrw: 200000,
+    avgPriceUsd: Number(convertKrwToUsd(200000).toFixed(2)),
+    currentPriceKrw: 220000,
+    currentPriceUsd: Number(convertKrwToUsd(220000).toFixed(2)),
     sector: 'IT',
     tags: ['인터넷', 'AI'],
   },
@@ -55,9 +60,10 @@ const initialHoldings: Holding[] = [
     symbol: '005380',
     name: '현대차',
     quantity: 80,
-    avgPrice: 180000,
-    currentPrice: 170000,
-    currency: 'KRW',
+    avgPriceKrw: 180000,
+    avgPriceUsd: Number(convertKrwToUsd(180000).toFixed(2)),
+    currentPriceKrw: 170000,
+    currentPriceUsd: Number(convertKrwToUsd(170000).toFixed(2)),
     sector: '자동차',
     tags: ['자동차', '전기차'],
   },
@@ -65,9 +71,10 @@ const initialHoldings: Holding[] = [
     symbol: '051910',
     name: 'LG화학',
     quantity: 40,
-    avgPrice: 450000,
-    currentPrice: 480000,
-    currency: 'KRW',
+    avgPriceKrw: 450000,
+    avgPriceUsd: Number(convertKrwToUsd(450000).toFixed(2)),
+    currentPriceKrw: 480000,
+    currentPriceUsd: Number(convertKrwToUsd(480000).toFixed(2)),
     sector: '화학',
     tags: ['배터리', 'ESG'],
   },
@@ -75,28 +82,83 @@ const initialHoldings: Holding[] = [
     symbol: '006400',
     name: '삼성SDI',
     quantity: 25,
-    avgPrice: 500000,
-    currentPrice: 550000,
-    currency: 'KRW',
+    avgPriceKrw: 500000,
+    avgPriceUsd: Number(convertKrwToUsd(500000).toFixed(2)),
+    currentPriceKrw: 550000,
+    currentPriceUsd: Number(convertKrwToUsd(550000).toFixed(2)),
     sector: '화학',
     tags: ['배터리', '전기차'],
   },
 ];
 
 const calculateValue = (holdings: Holding[]) => {
-  return holdings.reduce((sum, h) => {
-    const priceInKRW = convertToKRW(h.currentPrice, h.currency);
-    return sum + priceInKRW * h.quantity;
-  }, 0);
+  return holdings.reduce((sum, h) => sum + h.currentPriceKrw * h.quantity, 0);
 };
 
 const calculateProfitLoss = (holdings: Holding[]) => {
-  return holdings.reduce((sum, h) => {
-    const avgPriceInKRW = convertToKRW(h.avgPrice, h.currency);
-    const currentPriceInKRW = convertToKRW(h.currentPrice, h.currency);
-    return sum + (currentPriceInKRW - avgPriceInKRW) * h.quantity;
-  }, 0);
+  return holdings.reduce((sum, h) => sum + (h.currentPriceKrw - h.avgPriceKrw) * h.quantity, 0);
 };
+
+function normalizeHolding(raw: any): Holding | null {
+  if (!raw) return null;
+
+  // v2 format (KRW/USD fields)
+  if (
+    typeof raw.avgPriceKrw === 'number' &&
+    typeof raw.currentPriceKrw === 'number' &&
+    typeof raw.avgPriceUsd === 'number' &&
+    typeof raw.currentPriceUsd === 'number'
+  ) {
+    return {
+      symbol: String(raw.symbol || '').trim(),
+      name: String(raw.name || '').trim(),
+      quantity: Number(raw.quantity) || 0,
+      avgPriceKrw: Number(raw.avgPriceKrw) || 0,
+      avgPriceUsd: Number(raw.avgPriceUsd) || 0,
+      currentPriceKrw: Number(raw.currentPriceKrw) || 0,
+      currentPriceUsd: Number(raw.currentPriceUsd) || 0,
+      sector: String(raw.sector || '기타'),
+      tags: Array.isArray(raw.tags) ? raw.tags : [],
+    };
+  }
+
+  // legacy format (avgPrice/currentPrice + currency)
+  if (typeof raw.avgPrice !== 'undefined' && typeof raw.currentPrice !== 'undefined') {
+    const legacyCurrency = raw.currency === 'USD' ? 'USD' : 'KRW';
+    const avg = Number(raw.avgPrice) || 0;
+    const cur = Number(raw.currentPrice) || 0;
+
+    const avgPriceKrw =
+      legacyCurrency === 'USD' ? Math.round(avg * DEFAULT_USD_TO_KRW_RATE) : Math.round(avg);
+    const currentPriceKrw =
+      legacyCurrency === 'USD' ? Math.round(cur * DEFAULT_USD_TO_KRW_RATE) : Math.round(cur);
+
+    const avgPriceUsd =
+      legacyCurrency === 'USD' ? Number(avg.toFixed(2)) : Number((avgPriceKrw / DEFAULT_USD_TO_KRW_RATE).toFixed(2));
+    const currentPriceUsd =
+      legacyCurrency === 'USD' ? Number(cur.toFixed(2)) : Number((currentPriceKrw / DEFAULT_USD_TO_KRW_RATE).toFixed(2));
+
+    return {
+      symbol: String(raw.symbol || '').trim(),
+      name: String(raw.name || '').trim(),
+      quantity: Number(raw.quantity) || 0,
+      avgPriceKrw,
+      avgPriceUsd,
+      currentPriceKrw,
+      currentPriceUsd,
+      sector: String(raw.sector || '기타'),
+      tags: Array.isArray(raw.tags) ? raw.tags : [],
+    };
+  }
+
+  return null;
+}
+
+function normalizeHoldings(rawHoldings: any[]): Holding[] {
+  return (rawHoldings || [])
+    .map(normalizeHolding)
+    .filter((h): h is Holding => !!h && !!h.symbol && !!h.name);
+}
 
 export const usePortfolioStore = create<PortfolioState>()(
   persist(
@@ -203,6 +265,40 @@ export const usePortfolioStore = create<PortfolioState>()(
       name: 'mindstock-portfolio-storage', // localStorage 키 이름
       // portfolio 객체 전체를 저장
       partialize: (state) => ({ portfolio: state.portfolio }),
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (!persistedState?.portfolio) {
+          return persistedState;
+        }
+
+        // v1 -> v2 migration
+        if (version < 2) {
+          const portfolio = persistedState.portfolio;
+          const normalized = normalizeHoldings(portfolio.holdings);
+
+          const nextPortfolio: Portfolio = {
+            ...portfolio,
+            holdings: normalized,
+            totalValue: calculateValue(normalized),
+            totalProfitLoss: calculateProfitLoss(normalized),
+          };
+
+          return { ...persistedState, portfolio: nextPortfolio };
+        }
+
+        // v2 or later: still normalize defensively
+        const portfolio = persistedState.portfolio;
+        const normalized = normalizeHoldings(portfolio.holdings);
+        return {
+          ...persistedState,
+          portfolio: {
+            ...portfolio,
+            holdings: normalized,
+            totalValue: calculateValue(normalized),
+            totalProfitLoss: calculateProfitLoss(normalized),
+          },
+        };
+      },
     }
   )
 );

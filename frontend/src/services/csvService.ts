@@ -4,6 +4,7 @@
  */
 
 import { Holding } from '../types';
+import { convertKrwToUsd, convertUsdToKrw } from '../utils/currency';
 
 /**
  * CSV 헤더
@@ -12,9 +13,10 @@ const CSV_HEADERS = [
   '종목코드',
   '종목명',
   '보유수량',
-  '평균매수가',
-  '현재가',
-  '통화',
+  '평균매수가(원)',
+  '평균매수가(달러)',
+  '현재가(원)',
+  '현재가(달러)',
   '섹터',
   '태그',
 ];
@@ -27,9 +29,10 @@ function holdingToCsvRow(holding: Holding): string[] {
     holding.symbol,
     holding.name,
     holding.quantity.toString(),
-    holding.avgPrice.toString(),
-    holding.currentPrice.toString(),
-    holding.currency || 'KRW',
+    holding.avgPriceKrw.toString(),
+    holding.avgPriceUsd.toString(),
+    holding.currentPriceKrw.toString(),
+    holding.currentPriceUsd.toString(),
     holding.sector || '',
     holding.tags.join(';'), // 태그는 세미콜론으로 구분
   ];
@@ -43,28 +46,75 @@ function csvRowToHolding(row: string[], headers: string[]): Holding | null {
     const symbolIndex = headers.indexOf('종목코드');
     const nameIndex = headers.indexOf('종목명');
     const quantityIndex = headers.indexOf('보유수량');
-    const avgPriceIndex = headers.indexOf('평균매수가');
-    const currentPriceIndex = headers.indexOf('현재가');
-    const currencyIndex = headers.indexOf('통화');
+    const avgPriceKrwIndex = headers.indexOf('평균매수가(원)');
+    const avgPriceUsdIndex = headers.indexOf('평균매수가(달러)');
+    const currentPriceKrwIndex = headers.indexOf('현재가(원)');
+    const currentPriceUsdIndex = headers.indexOf('현재가(달러)');
     const sectorIndex = headers.indexOf('섹터');
     const tagsIndex = headers.indexOf('태그');
 
-    if (symbolIndex === -1 || nameIndex === -1 || quantityIndex === -1 || 
-        avgPriceIndex === -1 || currentPriceIndex === -1) {
+    // v2 (dual price) required
+    const hasV2 =
+      avgPriceKrwIndex !== -1 &&
+      avgPriceUsdIndex !== -1 &&
+      currentPriceKrwIndex !== -1 &&
+      currentPriceUsdIndex !== -1;
+
+    // legacy (single price + currency) support
+    const avgPriceLegacyIndex = headers.indexOf('평균매수가');
+    const currentPriceLegacyIndex = headers.indexOf('현재가');
+    const currencyLegacyIndex = headers.indexOf('통화');
+    const hasLegacy = avgPriceLegacyIndex !== -1 && currentPriceLegacyIndex !== -1;
+
+    if (symbolIndex === -1 || nameIndex === -1 || quantityIndex === -1 || (!hasV2 && !hasLegacy)) {
       return null;
     }
 
     const tags = row[tagsIndex] ? row[tagsIndex].split(';').map(t => t.trim()).filter(t => t) : [];
-    const currency = row[currencyIndex]?.trim() === 'USD' ? 'USD' : 'KRW';
+
+    const symbol = row[symbolIndex]?.trim() || '';
+    const name = row[nameIndex]?.trim() || '';
+    const quantity = parseFloat(row[quantityIndex] || '0');
+    const sector = row[sectorIndex]?.trim() || '기타';
+
+    if (hasV2) {
+      const avgPriceKrw = parseFloat(row[avgPriceKrwIndex] || '0');
+      const avgPriceUsd = parseFloat(row[avgPriceUsdIndex] || '0');
+      const currentPriceKrw = parseFloat(row[currentPriceKrwIndex] || '0');
+      const currentPriceUsd = parseFloat(row[currentPriceUsdIndex] || '0');
+
+      return {
+        symbol,
+        name,
+        quantity,
+        avgPriceKrw,
+        avgPriceUsd,
+        currentPriceKrw,
+        currentPriceUsd,
+        sector,
+        tags,
+      };
+    }
+
+    // legacy
+    const legacyAvg = parseFloat(row[avgPriceLegacyIndex] || '0');
+    const legacyCur = parseFloat(row[currentPriceLegacyIndex] || '0');
+    const legacyCurrency = row[currencyLegacyIndex]?.trim() === 'USD' ? 'USD' : 'KRW';
+
+    const avgPriceKrw = legacyCurrency === 'USD' ? Math.round(convertUsdToKrw(legacyAvg)) : Math.round(legacyAvg);
+    const currentPriceKrw = legacyCurrency === 'USD' ? Math.round(convertUsdToKrw(legacyCur)) : Math.round(legacyCur);
+    const avgPriceUsd = legacyCurrency === 'USD' ? Number(legacyAvg.toFixed(2)) : Number(convertKrwToUsd(avgPriceKrw).toFixed(2));
+    const currentPriceUsd = legacyCurrency === 'USD' ? Number(legacyCur.toFixed(2)) : Number(convertKrwToUsd(currentPriceKrw).toFixed(2));
 
     return {
-      symbol: row[symbolIndex]?.trim() || '',
-      name: row[nameIndex]?.trim() || '',
-      quantity: parseFloat(row[quantityIndex] || '0'),
-      avgPrice: parseFloat(row[avgPriceIndex] || '0'),
-      currentPrice: parseFloat(row[currentPriceIndex] || '0'),
-      currency,
-      sector: row[sectorIndex]?.trim() || '기타',
+      symbol,
+      name,
+      quantity,
+      avgPriceKrw,
+      avgPriceUsd,
+      currentPriceKrw,
+      currentPriceUsd,
+      sector,
       tags,
     };
   } catch (error) {
@@ -122,10 +172,14 @@ export function importFromCsv(csvContent: string): Holding[] {
   const headers = parseCsvLine(headerLine);
   
   // 헤더 검증
-  const requiredHeaders = ['종목코드', '종목명', '보유수량', '평균매수가', '현재가'];
-  const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-  if (missingHeaders.length > 0) {
-    throw new Error(`필수 컬럼이 없습니다: ${missingHeaders.join(', ')}`);
+  const v2Required = ['종목코드', '종목명', '보유수량', '평균매수가(원)', '평균매수가(달러)', '현재가(원)', '현재가(달러)'];
+  const legacyRequired = ['종목코드', '종목명', '보유수량', '평균매수가', '현재가'];
+  const hasV2 = v2Required.every(h => headers.includes(h));
+  const hasLegacy = legacyRequired.every(h => headers.includes(h));
+
+  if (!hasV2 && !hasLegacy) {
+    const missing = v2Required.filter(h => !headers.includes(h));
+    throw new Error(`필수 컬럼이 없습니다: ${missing.join(', ')}`);
   }
   
   // 데이터 행 파싱

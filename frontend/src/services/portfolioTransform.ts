@@ -99,10 +99,10 @@ function transformToSectorView(portfolio: Portfolio): MindMapNode {
   // 각 섹터별 노드 생성
   sectorMap.forEach((holdings, sector) => {
     const sectorValue = holdings.reduce((sum, h) => 
-      sum + (h.currentPrice * h.quantity), 0
+      sum + (h.currentPriceKrw * h.quantity), 0
     );
     const sectorProfitLoss = holdings.reduce((sum, h) => {
-      const profitLoss = (h.currentPrice - h.avgPrice) * h.quantity;
+      const profitLoss = (h.currentPriceKrw - h.avgPriceKrw) * h.quantity;
       return sum + profitLoss;
     }, 0);
     const sectorProfitLossRate = sectorValue > 0 
@@ -118,10 +118,10 @@ function transformToSectorView(portfolio: Portfolio): MindMapNode {
       type: 'category',
       sector,
       children: holdings.map(holding => {
-        const value = holding.currentPrice * holding.quantity;
-        const profitLoss = (holding.currentPrice - holding.avgPrice) * holding.quantity;
-        const profitLossRate = holding.avgPrice > 0 
-          ? ((holding.currentPrice - holding.avgPrice) / holding.avgPrice) * 100 
+        const value = holding.currentPriceKrw * holding.quantity;
+        const profitLoss = (holding.currentPriceKrw - holding.avgPriceKrw) * holding.quantity;
+        const profitLossRate = holding.avgPriceKrw > 0 
+          ? ((holding.currentPriceKrw - holding.avgPriceKrw) / holding.avgPriceKrw) * 100 
           : 0;
 
         return {
@@ -171,8 +171,8 @@ function transformToProfitLossView(portfolio: Portfolio): MindMapNode {
 
   categories.forEach(category => {
     const holdings = portfolio.holdings.filter(holding => {
-      const profitLossRate = holding.avgPrice > 0 
-        ? ((holding.currentPrice - holding.avgPrice) / holding.avgPrice) * 100 
+      const profitLossRate = holding.avgPriceKrw > 0 
+        ? ((holding.currentPriceKrw - holding.avgPriceKrw) / holding.avgPriceKrw) * 100 
         : 0;
       return profitLossRate >= category.min && profitLossRate < category.max;
     });
@@ -180,10 +180,10 @@ function transformToProfitLossView(portfolio: Portfolio): MindMapNode {
     if (holdings.length === 0) return;
 
     const categoryValue = holdings.reduce((sum, h) => 
-      sum + (h.currentPrice * h.quantity), 0
+      sum + (h.currentPriceKrw * h.quantity), 0
     );
     const categoryProfitLoss = holdings.reduce((sum, h) => {
-      const profitLoss = (h.currentPrice - h.avgPrice) * h.quantity;
+      const profitLoss = (h.currentPriceKrw - h.avgPriceKrw) * h.quantity;
       return sum + profitLoss;
     }, 0);
     const categoryProfitLossRate = categoryValue > 0 
@@ -198,10 +198,10 @@ function transformToProfitLossView(portfolio: Portfolio): MindMapNode {
       profitLossRate: categoryProfitLossRate,
       type: 'category',
       children: holdings.map(holding => {
-        const value = holding.currentPrice * holding.quantity;
-        const profitLoss = (holding.currentPrice - holding.avgPrice) * holding.quantity;
-        const profitLossRate = holding.avgPrice > 0 
-          ? ((holding.currentPrice - holding.avgPrice) / holding.avgPrice) * 100 
+        const value = holding.currentPriceKrw * holding.quantity;
+        const profitLoss = (holding.currentPriceKrw - holding.avgPriceKrw) * holding.quantity;
+        const profitLossRate = holding.avgPriceKrw > 0 
+          ? ((holding.currentPriceKrw - holding.avgPriceKrw) / holding.avgPriceKrw) * 100 
           : 0;
 
         return {
@@ -263,10 +263,10 @@ function transformToThemeView(portfolio: Portfolio): MindMapNode {
   // 각 태그별 노드 생성
   tagMap.forEach((holdings, tag) => {
     const tagValue = holdings.reduce((sum, h) => 
-      sum + (h.currentPrice * h.quantity), 0
+      sum + (h.currentPriceKrw * h.quantity), 0
     );
     const tagProfitLoss = holdings.reduce((sum, h) => {
-      const profitLoss = (h.currentPrice - h.avgPrice) * h.quantity;
+      const profitLoss = (h.currentPriceKrw - h.avgPriceKrw) * h.quantity;
       return sum + profitLoss;
     }, 0);
     const tagProfitLossRate = tagValue > 0 
@@ -282,10 +282,10 @@ function transformToThemeView(portfolio: Portfolio): MindMapNode {
       type: 'category',
       tags: [tag],
       children: holdings.map(holding => {
-        const value = holding.currentPrice * holding.quantity;
-        const profitLoss = (holding.currentPrice - holding.avgPrice) * holding.quantity;
-        const profitLossRate = holding.avgPrice > 0 
-          ? ((holding.currentPrice - holding.avgPrice) / holding.avgPrice) * 100 
+        const value = holding.currentPriceKrw * holding.quantity;
+        const profitLoss = (holding.currentPriceKrw - holding.avgPriceKrw) * holding.quantity;
+        const profitLossRate = holding.avgPriceKrw > 0 
+          ? ((holding.currentPriceKrw - holding.avgPriceKrw) / holding.avgPriceKrw) * 100 
           : 0;
 
         return {

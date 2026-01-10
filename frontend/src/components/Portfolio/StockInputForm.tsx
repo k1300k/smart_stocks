@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Holding } from '../../types';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import StockSearchInput from './StockSearchInput';
+import { convertKrwToUsd, convertUsdToKrw } from '../../utils/currency';
 
 interface StockInputFormProps {
   onClose: () => void;
@@ -34,9 +35,10 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
     symbol: editingHolding?.symbol || '',
     name: editingHolding?.name || '',
     quantity: editingHolding?.quantity || 0,
-    avgPrice: editingHolding?.avgPrice || 0,
-    currentPrice: editingHolding?.currentPrice || 0,
-    currency: editingHolding?.currency || 'KRW',
+    avgPriceKrw: editingHolding?.avgPriceKrw || 0,
+    avgPriceUsd: editingHolding?.avgPriceUsd || 0,
+    currentPriceKrw: editingHolding?.currentPriceKrw || 0,
+    currentPriceUsd: editingHolding?.currentPriceUsd || 0,
     sector: editingHolding?.sector || '기타',
     tags: editingHolding?.tags || [],
   });
@@ -120,13 +122,15 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
             </label>
             <StockSearchInput
               onSelect={(stock, currentPrice) => {
-                setFormData({
-                  ...formData,
+                const isKrx = stock.market === 'KRX' || /^\d{6}$/.test(stock.symbol);
+                setFormData(prev => ({
+                  ...prev,
                   symbol: stock.symbol,
                   name: stock.nameKo ? `${stock.nameKo} (${stock.name})` : stock.name,
-                  currentPrice: currentPrice,
-                  sector: stock.sector || formData.sector,
-                });
+                  currentPriceKrw: isKrx ? currentPrice : Math.round(convertUsdToKrw(currentPrice)),
+                  currentPriceUsd: isKrx ? Number(convertKrwToUsd(currentPrice).toFixed(2)) : Number(currentPrice.toFixed(2)),
+                  sector: stock.sector || prev.sector,
+                }));
               }}
             />
             <p className="mt-1 text-xs text-text-tertiary">
@@ -194,59 +198,130 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
           </p>
         </div>
 
-        {/* 평균 매수가 */}
+        {/* 평균 매수가 (원/달러) */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">
-            평균 매수가 (원) *
+            평균 매수가 * (원 / 달러)
           </label>
-          <input
-            type="number"
-            value={formData.avgPrice || ''}
-            onChange={e => setFormData({ ...formData, avgPrice: Number(e.target.value) })}
-            placeholder="65000"
-            required
-            min="0"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <div className="text-xs text-text-tertiary mb-1">원 (KRW)</div>
+              <input
+                type="number"
+                value={formData.avgPriceKrw || ''}
+                onChange={e => {
+                  const krw = Number(e.target.value) || 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    avgPriceKrw: krw,
+                    avgPriceUsd: Number(convertKrwToUsd(krw).toFixed(2)),
+                  }));
+                }}
+                placeholder="65000"
+                required
+                min="0"
+                step="1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              />
+            </div>
+            <div>
+              <div className="text-xs text-text-tertiary mb-1">달러 (USD)</div>
+              <input
+                type="number"
+                value={formData.avgPriceUsd || ''}
+                onChange={e => {
+                  const usd = Number(e.target.value) || 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    avgPriceUsd: usd,
+                    avgPriceKrw: Math.round(convertUsdToKrw(usd)),
+                  }));
+                }}
+                placeholder="50.00"
+                required
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* 현재가 */}
+        {/* 현재가 (원/달러) */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">
-            현재가 (원) *
+            현재가 * (원 / 달러)
           </label>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              value={formData.currentPrice || ''}
-              onChange={e => setFormData({ ...formData, currentPrice: Number(e.target.value) })}
-              placeholder="70000"
-              required
-              min="0"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            />
-            {formData.symbol && !isEditing && (
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    const { getCurrentPrice } = await import('../../services/stockApi');
-                    // 시장 구분: 6자리 숫자는 국내, 그 외는 해외로 간주
-                    const market = /^\d{6}$/.test(formData.symbol) ? 'KRX' : undefined;
-                    const stockInfo = await getCurrentPrice(formData.symbol, market);
-                    setFormData({
-                      ...formData,
-                      currentPrice: stockInfo.currentPrice,
-                    });
-                  } catch (error) {
-                    alert('현재가를 가져오는 중 오류가 발생했습니다.');
-                  }
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <div className="text-xs text-text-tertiary mb-1">원 (KRW)</div>
+              <input
+                type="number"
+                value={formData.currentPriceKrw || ''}
+                onChange={e => {
+                  const krw = Number(e.target.value) || 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    currentPriceKrw: krw,
+                    currentPriceUsd: Number(convertKrwToUsd(krw).toFixed(2)),
+                  }));
                 }}
-                className="px-4 py-2 bg-primary-blue text-white rounded-md hover:bg-blue-600 text-sm whitespace-nowrap"
-              >
-                가격 조회
-              </button>
-            )}
+                placeholder="70000"
+                required
+                min="0"
+                step="1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              />
+            </div>
+            <div>
+              <div className="text-xs text-text-tertiary mb-1">달러 (USD)</div>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={formData.currentPriceUsd || ''}
+                  onChange={e => {
+                    const usd = Number(e.target.value) || 0;
+                    setFormData(prev => ({
+                      ...prev,
+                      currentPriceUsd: usd,
+                      currentPriceKrw: Math.round(convertUsdToKrw(usd)),
+                    }));
+                  }}
+                  placeholder="53.85"
+                  required
+                  min="0"
+                  step="0.01"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                />
+                {formData.symbol && !isEditing && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const { getCurrentPrice } = await import('../../services/stockApi');
+                        // 시장 구분: 6자리 숫자는 국내(KRW), 그 외는 해외(USD)로 간주
+                        const market = /^\d{6}$/.test(formData.symbol) ? 'KRX' : undefined;
+                        const stockInfo = await getCurrentPrice(formData.symbol, market);
+                        const isKrx = market === 'KRX';
+
+                        setFormData(prev => ({
+                          ...prev,
+                          currentPriceKrw: isKrx ? stockInfo.currentPrice : Math.round(convertUsdToKrw(stockInfo.currentPrice)),
+                          currentPriceUsd: isKrx
+                            ? Number(convertKrwToUsd(stockInfo.currentPrice).toFixed(2))
+                            : Number(stockInfo.currentPrice.toFixed(2)),
+                        }));
+                      } catch (error) {
+                        alert('현재가를 가져오는 중 오류가 발생했습니다.');
+                      }
+                    }}
+                    className="px-4 py-2 bg-primary-blue text-white rounded-md hover:bg-blue-600 text-sm whitespace-nowrap"
+                  >
+                    가격 조회
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

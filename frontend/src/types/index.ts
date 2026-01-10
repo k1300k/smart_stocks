@@ -17,9 +17,14 @@ export interface Holding {
   symbol: string;        // 005930 (삼성전자)
   name: string;
   quantity: number;
-  avgPrice: number;
-  currentPrice: number;  // KIS API에서 실시간 업데이트
-  currency: Currency;    // 통화 (기본값: KRW)
+  /** 평균 매수가 (원) */
+  avgPriceKrw: number;
+  /** 평균 매수가 (달러) */
+  avgPriceUsd: number;
+  /** 현재가 (원) */
+  currentPriceKrw: number;
+  /** 현재가 (달러) */
+  currentPriceUsd: number;
   sector: string;
   tags: string[];        // 사용자 정의 태그
   profitLoss?: number;   // 손익

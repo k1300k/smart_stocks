@@ -8,7 +8,7 @@ import { usePortfolioStore } from '../../stores/portfolioStore';
 import StockInputForm from './StockInputForm';
 import ExportImportModal from './ExportImportModal';
 import { getColorByProfitLoss } from '../../services/portfolioTransform';
-import { formatCurrency, convertToKRW } from '../../utils/currency';
+import { formatKRW, formatUSD } from '../../utils/currency';
 import { useExchangeRateStore } from '../../stores/exchangeRateStore';
 
 export default function PortfolioList() {
@@ -34,12 +34,12 @@ export default function PortfolioList() {
   };
 
   const calculateProfitLoss = (holding: Holding) => {
-    return (holding.currentPrice - holding.avgPrice) * holding.quantity;
+    return (holding.currentPriceKrw - holding.avgPriceKrw) * holding.quantity;
   };
 
   const calculateProfitLossRate = (holding: Holding) => {
-    if (holding.avgPrice === 0) return 0;
-    return ((holding.currentPrice - holding.avgPrice) / holding.avgPrice) * 100;
+    if (holding.avgPriceKrw === 0) return 0;
+    return ((holding.currentPriceKrw - holding.avgPriceKrw) / holding.avgPriceKrw) * 100;
   };
 
   return (
@@ -118,7 +118,9 @@ export default function PortfolioList() {
           portfolio.holdings.map(holding => {
             const profitLoss = calculateProfitLoss(holding);
             const profitLossRate = calculateProfitLossRate(holding);
-            const value = holding.currentPrice * holding.quantity;
+            const valueKrw = holding.currentPriceKrw * holding.quantity;
+            const valueUsd = holding.currentPriceUsd * holding.quantity;
+            const profitLossUsd = holding.currentPriceUsd * holding.quantity - holding.avgPriceUsd * holding.quantity;
 
             return (
               <div
@@ -156,29 +158,19 @@ export default function PortfolioList() {
                       <div>
                         <span className="text-text-secondary">평균가: </span>
                         <span className="font-mono">
-                          {formatCurrency(holding.avgPrice, holding.currency)}
+                          {formatKRW(holding.avgPriceKrw)} / {formatUSD(holding.avgPriceUsd)}
                         </span>
-                        {holding.currency === 'USD' && (
-                          <span className="text-xs text-text-tertiary ml-1">
-                            (≈{convertToKRW(holding.avgPrice, holding.currency).toLocaleString('ko-KR')}원)
-                          </span>
-                        )}
                       </div>
                       <div>
                         <span className="text-text-secondary">현재가: </span>
                         <span className="font-mono">
-                          {formatCurrency(holding.currentPrice, holding.currency)}
+                          {formatKRW(holding.currentPriceKrw)} / {formatUSD(holding.currentPriceUsd)}
                         </span>
-                        {holding.currency === 'USD' && (
-                          <span className="text-xs text-text-tertiary ml-1">
-                            (≈{convertToKRW(holding.currentPrice, holding.currency).toLocaleString('ko-KR')}원)
-                          </span>
-                        )}
                       </div>
                       <div>
                         <span className="text-text-secondary">평가액: </span>
                         <span className="font-mono font-semibold">
-                          {value.toLocaleString('ko-KR')}원
+                          {formatKRW(valueKrw)} / {formatUSD(valueUsd)}
                         </span>
                       </div>
                     </div>
@@ -189,8 +181,8 @@ export default function PortfolioList() {
                         style={{ color: getColorByProfitLoss(profitLossRate) }}
                       >
                         {profitLoss >= 0 ? '+' : ''}
-                        {profitLoss.toLocaleString('ko-KR')}원 ({profitLossRate >= 0 ? '+' : ''}
-                        {profitLossRate.toFixed(2)}%)
+                        {formatKRW(profitLoss)} / {formatUSD(profitLossUsd)} (
+                        {profitLossRate >= 0 ? '+' : ''}{profitLossRate.toFixed(2)}%)
                       </span>
                     </div>
 

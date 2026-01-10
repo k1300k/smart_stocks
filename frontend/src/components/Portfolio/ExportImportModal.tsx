@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import { exportToCsv, importFromCsv, downloadFile, readFile } from '../../services/csvService';
 import { Holding } from '../../types';
+import { convertKrwToUsd, convertUsdToKrw } from '../../utils/currency';
 
 interface ExportImportModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export default function ExportImportModal({ isOpen, onClose }: ExportImportModal
     const data = {
       holdings: portfolio.holdings,
       exportedAt: new Date().toISOString(),
-      version: '1.0',
+      version: '2.0',
     };
     
     const jsonContent = JSON.stringify(data, null, 2);
@@ -62,16 +63,51 @@ export default function ExportImportModal({ isOpen, onClose }: ExportImportModal
       }
 
       // 데이터 검증 및 변환
-      const holdings: Holding[] = data.holdings.map((item: any) => ({
-        symbol: item.symbol || '',
-        name: item.name || '',
-        quantity: Number(item.quantity) || 0,
-        avgPrice: Number(item.avgPrice) || 0,
-        currentPrice: Number(item.currentPrice) || 0,
-        currency: (item.currency === 'USD' ? 'USD' : 'KRW') as 'KRW' | 'USD',
-        sector: item.sector || '기타',
-        tags: Array.isArray(item.tags) ? item.tags : [],
-      })).filter((h: Holding) => h.symbol && h.name);
+      const holdings: Holding[] = data.holdings
+        .map((item: any) => {
+          // v2 format
+          if (
+            typeof item.avgPriceKrw !== 'undefined' &&
+            typeof item.avgPriceUsd !== 'undefined' &&
+            typeof item.currentPriceKrw !== 'undefined' &&
+            typeof item.currentPriceUsd !== 'undefined'
+          ) {
+            return {
+              symbol: item.symbol || '',
+              name: item.name || '',
+              quantity: Number(item.quantity) || 0,
+              avgPriceKrw: Number(item.avgPriceKrw) || 0,
+              avgPriceUsd: Number(item.avgPriceUsd) || 0,
+              currentPriceKrw: Number(item.currentPriceKrw) || 0,
+              currentPriceUsd: Number(item.currentPriceUsd) || 0,
+              sector: item.sector || '기타',
+              tags: Array.isArray(item.tags) ? item.tags : [],
+            } satisfies Holding;
+          }
+
+          // legacy format (avgPrice/currentPrice + currency)
+          const legacyCurrency = item.currency === 'USD' ? 'USD' : 'KRW';
+          const legacyAvg = Number(item.avgPrice) || 0;
+          const legacyCur = Number(item.currentPrice) || 0;
+
+          const avgPriceKrw = legacyCurrency === 'USD' ? Math.round(convertUsdToKrw(legacyAvg)) : Math.round(legacyAvg);
+          const currentPriceKrw = legacyCurrency === 'USD' ? Math.round(convertUsdToKrw(legacyCur)) : Math.round(legacyCur);
+          const avgPriceUsd = legacyCurrency === 'USD' ? Number(legacyAvg.toFixed(2)) : Number(convertKrwToUsd(avgPriceKrw).toFixed(2));
+          const currentPriceUsd = legacyCurrency === 'USD' ? Number(legacyCur.toFixed(2)) : Number(convertKrwToUsd(currentPriceKrw).toFixed(2));
+
+          return {
+            symbol: item.symbol || '',
+            name: item.name || '',
+            quantity: Number(item.quantity) || 0,
+            avgPriceKrw,
+            avgPriceUsd,
+            currentPriceKrw,
+            currentPriceUsd,
+            sector: item.sector || '기타',
+            tags: Array.isArray(item.tags) ? item.tags : [],
+          } satisfies Holding;
+        })
+        .filter((h: Holding) => h.symbol && h.name);
 
       if (holdings.length === 0) {
         throw new Error('유효한 종목 데이터가 없습니다.');
