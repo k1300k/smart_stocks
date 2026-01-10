@@ -89,6 +89,18 @@ export default function PortfolioList() {
         </div>
       </div>
 
+      {/* 환율 정보 */}
+      {lastUpdated && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="text-xs text-blue-700">
+            💱 환율: 1 USD = {usdToKrwRate.toLocaleString('ko-KR')} KRW
+            <span className="ml-2 text-blue-600">
+              (업데이트: {new Date(lastUpdated).toLocaleTimeString('ko-KR')})
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* 종목 목록 */}
       <div className="space-y-2">
         {portfolio.holdings.length === 0 ? (
