@@ -10,7 +10,9 @@ interface ExchangeRateState {
   usdToKrwRate: number;
   lastUpdated: number | null;
   isLoading: boolean;
+  isManualRate: boolean; // 사용자가 직접 입력한 환율인지
   updateRate: () => Promise<void>;
+  setManualRate: (rate: number) => void;
 }
 
 // 기본 환율 (1 USD = 1300 KRW)
@@ -23,10 +25,16 @@ export const useExchangeRateStore = create<ExchangeRateState>()(
       usdToKrwRate: DEFAULT_RATE,
       lastUpdated: null,
       isLoading: false,
+      isManualRate: false,
 
       updateRate: async () => {
         const state = get();
         const now = Date.now();
+
+        // 수동으로 설정한 환율이면 자동 업데이트 스킵
+        if (state.isManualRate) {
+          return;
+        }
 
         // 이미 최근에 업데이트했고 아직 1시간이 지나지 않았으면 스킵
         if (state.lastUpdated && (now - state.lastUpdated) < UPDATE_INTERVAL) {
@@ -41,10 +49,21 @@ export const useExchangeRateStore = create<ExchangeRateState>()(
             usdToKrwRate: rate,
             lastUpdated: now,
             isLoading: false,
+            isManualRate: false,
           });
         } catch (error) {
           console.error('Failed to update exchange rate:', error);
           set({ isLoading: false });
+        }
+      },
+
+      setManualRate: (rate: number) => {
+        if (rate > 0 && rate < 2000) {
+          set({
+            usdToKrwRate: rate,
+            lastUpdated: Date.now(),
+            isManualRate: true,
+          });
         }
       },
     }),
@@ -53,6 +72,7 @@ export const useExchangeRateStore = create<ExchangeRateState>()(
       partialize: (state) => ({
         usdToKrwRate: state.usdToKrwRate,
         lastUpdated: state.lastUpdated,
+        isManualRate: state.isManualRate,
       }),
     }
   )

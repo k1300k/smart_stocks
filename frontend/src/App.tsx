@@ -14,6 +14,7 @@ import { usePortfolioStore } from './stores/portfolioStore';
 import { useAuthStore } from './stores/authStore';
 import { useExchangeRateStore } from './stores/exchangeRateStore';
 import ApiKeyModal from './components/Settings/ApiKeyModal';
+import ExchangeRateModal from './components/Settings/ExchangeRateModal';
 import AuthPage from './pages/AuthPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -26,6 +27,7 @@ function Dashboard() {
   const [selectedNode, setSelectedNode] = useState<MindMapNode | null>(null);
   const [showPortfolioList, setShowPortfolioList] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showExchangeRateModal, setShowExchangeRateModal] = useState(false);
   const portfolio = usePortfolioStore(state => state.portfolio);
   const { user, logout } = useAuthStore();
   const { updateRate } = useExchangeRateStore();
