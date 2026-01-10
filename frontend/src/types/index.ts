@@ -11,12 +11,15 @@ export interface Portfolio {
   totalProfitLoss: number;
 }
 
+export type Currency = 'KRW' | 'USD';
+
 export interface Holding {
   symbol: string;        // 005930 (삼성전자)
   name: string;
   quantity: number;
   avgPrice: number;
   currentPrice: number;  // KIS API에서 실시간 업데이트
+  currency: Currency;    // 통화 (기본값: KRW)
   sector: string;
   tags: string[];        // 사용자 정의 태그
   profitLoss?: number;   // 손익

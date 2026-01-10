@@ -68,6 +68,7 @@ export default function ExportImportModal({ isOpen, onClose }: ExportImportModal
         quantity: Number(item.quantity) || 0,
         avgPrice: Number(item.avgPrice) || 0,
         currentPrice: Number(item.currentPrice) || 0,
+        currency: (item.currency === 'USD' ? 'USD' : 'KRW') as 'KRW' | 'USD',
         sector: item.sector || '기타',
         tags: Array.isArray(item.tags) ? item.tags : [],
       })).filter((h: Holding) => h.symbol && h.name);

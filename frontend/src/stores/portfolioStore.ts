@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Portfolio, Holding } from '../types';
+import { convertToKRW } from '../utils/currency';
 
 interface PortfolioState {
   portfolio: Portfolio;
@@ -26,6 +27,7 @@ const initialHoldings: Holding[] = [
     quantity: 100,
     avgPrice: 65000,
     currentPrice: 70000,
+    currency: 'KRW',
     sector: 'IT',
     tags: ['대형주', '배당주'],
   },
@@ -35,6 +37,7 @@ const initialHoldings: Holding[] = [
     quantity: 50,
     avgPrice: 120000,
     currentPrice: 135000,
+    currency: 'KRW',
     sector: 'IT',
     tags: ['반도체', 'AI'],
   },
@@ -44,6 +47,7 @@ const initialHoldings: Holding[] = [
     quantity: 30,
     avgPrice: 200000,
     currentPrice: 220000,
+    currency: 'KRW',
     sector: 'IT',
     tags: ['인터넷', 'AI'],
   },
@@ -53,6 +57,7 @@ const initialHoldings: Holding[] = [
     quantity: 80,
     avgPrice: 180000,
     currentPrice: 170000,
+    currency: 'KRW',
     sector: '자동차',
     tags: ['자동차', '전기차'],
   },
@@ -62,6 +67,7 @@ const initialHoldings: Holding[] = [
     quantity: 40,
     avgPrice: 450000,
     currentPrice: 480000,
+    currency: 'KRW',
     sector: '화학',
     tags: ['배터리', 'ESG'],
   },
@@ -71,20 +77,25 @@ const initialHoldings: Holding[] = [
     quantity: 25,
     avgPrice: 500000,
     currentPrice: 550000,
+    currency: 'KRW',
     sector: '화학',
     tags: ['배터리', '전기차'],
   },
 ];
 
 const calculateValue = (holdings: Holding[]) => {
-  return holdings.reduce((sum, h) => sum + h.currentPrice * h.quantity, 0);
+  return holdings.reduce((sum, h) => {
+    const priceInKRW = convertToKRW(h.currentPrice, h.currency);
+    return sum + priceInKRW * h.quantity;
+  }, 0);
 };
 
 const calculateProfitLoss = (holdings: Holding[]) => {
-  return holdings.reduce(
-    (sum, h) => sum + (h.currentPrice - h.avgPrice) * h.quantity,
-    0
-  );
+  return holdings.reduce((sum, h) => {
+    const avgPriceInKRW = convertToKRW(h.avgPrice, h.currency);
+    const currentPriceInKRW = convertToKRW(h.currentPrice, h.currency);
+    return sum + (currentPriceInKRW - avgPriceInKRW) * h.quantity;
+  }, 0);
 };
 
 export const usePortfolioStore = create<PortfolioState>()(

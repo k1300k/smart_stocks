@@ -14,6 +14,7 @@ const CSV_HEADERS = [
   '보유수량',
   '평균매수가',
   '현재가',
+  '통화',
   '섹터',
   '태그',
 ];
@@ -28,6 +29,7 @@ function holdingToCsvRow(holding: Holding): string[] {
     holding.quantity.toString(),
     holding.avgPrice.toString(),
     holding.currentPrice.toString(),
+    holding.currency || 'KRW',
     holding.sector || '',
     holding.tags.join(';'), // 태그는 세미콜론으로 구분
   ];
@@ -43,6 +45,7 @@ function csvRowToHolding(row: string[], headers: string[]): Holding | null {
     const quantityIndex = headers.indexOf('보유수량');
     const avgPriceIndex = headers.indexOf('평균매수가');
     const currentPriceIndex = headers.indexOf('현재가');
+    const currencyIndex = headers.indexOf('통화');
     const sectorIndex = headers.indexOf('섹터');
     const tagsIndex = headers.indexOf('태그');
 
@@ -52,6 +55,7 @@ function csvRowToHolding(row: string[], headers: string[]): Holding | null {
     }
 
     const tags = row[tagsIndex] ? row[tagsIndex].split(';').map(t => t.trim()).filter(t => t) : [];
+    const currency = row[currencyIndex]?.trim() === 'USD' ? 'USD' : 'KRW';
 
     return {
       symbol: row[symbolIndex]?.trim() || '',
@@ -59,6 +63,7 @@ function csvRowToHolding(row: string[], headers: string[]): Holding | null {
       quantity: parseFloat(row[quantityIndex] || '0'),
       avgPrice: parseFloat(row[avgPriceIndex] || '0'),
       currentPrice: parseFloat(row[currentPriceIndex] || '0'),
+      currency,
       sector: row[sectorIndex]?.trim() || '기타',
       tags,
     };

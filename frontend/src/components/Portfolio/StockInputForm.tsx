@@ -36,6 +36,7 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
     quantity: editingHolding?.quantity || 0,
     avgPrice: editingHolding?.avgPrice || 0,
     currentPrice: editingHolding?.currentPrice || 0,
+    currency: editingHolding?.currency || 'KRW',
     sector: editingHolding?.sector || '기타',
     tags: editingHolding?.tags || [],
   });

@@ -8,6 +8,7 @@ import { usePortfolioStore } from '../../stores/portfolioStore';
 import StockInputForm from './StockInputForm';
 import ExportImportModal from './ExportImportModal';
 import { getColorByProfitLoss } from '../../services/portfolioTransform';
+import { formatCurrency, convertToKRW } from '../../utils/currency';
 
 export default function PortfolioList() {
   const { portfolio, removeHolding } = usePortfolioStore();
@@ -141,14 +142,24 @@ export default function PortfolioList() {
                       <div>
                         <span className="text-text-secondary">평균가: </span>
                         <span className="font-mono">
-                          {holding.avgPrice.toLocaleString('ko-KR')}원
+                          {formatCurrency(holding.avgPrice, holding.currency)}
                         </span>
+                        {holding.currency === 'USD' && (
+                          <span className="text-xs text-text-tertiary ml-1">
+                            (≈{convertToKRW(holding.avgPrice, holding.currency).toLocaleString('ko-KR')}원)
+                          </span>
+                        )}
                       </div>
                       <div>
                         <span className="text-text-secondary">현재가: </span>
                         <span className="font-mono">
-                          {holding.currentPrice.toLocaleString('ko-KR')}원
+                          {formatCurrency(holding.currentPrice, holding.currency)}
                         </span>
+                        {holding.currency === 'USD' && (
+                          <span className="text-xs text-text-tertiary ml-1">
+                            (≈{convertToKRW(holding.currentPrice, holding.currency).toLocaleString('ko-KR')}원)
+                          </span>
+                        )}
                       </div>
                       <div>
                         <span className="text-text-secondary">평가액: </span>
