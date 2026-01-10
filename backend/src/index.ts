@@ -7,6 +7,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import stockRoutes from './routes/stockRoutes';
+import authRoutes from './routes/authRoutes';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 라우트
+app.use('/api/auth', authRoutes);
 app.use('/api/stocks', stockRoutes);
 
 // Health check

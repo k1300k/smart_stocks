@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MindMapView from './components/MindMap/MindMapView';
 import ViewModeSelector from './components/MindMap/ViewModeSelector';
 import NodeDetailPanel from './components/MindMap/NodeDetailPanel';
@@ -10,14 +11,22 @@ import PortfolioList from './components/Portfolio/PortfolioList';
 import { ViewMode, MindMapNode } from './types';
 import { transformPortfolioToMindMap } from './services/portfolioTransform';
 import { usePortfolioStore } from './stores/portfolioStore';
+import { useAuthStore } from './stores/authStore';
 import ApiKeyModal from './components/Settings/ApiKeyModal';
+import AuthPage from './pages/AuthPage';
 
-function App() {
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuthStore();
+  return isAuthenticated ? <>{children}</> : <Navigate to="/auth" replace />;
+}
+
+function Dashboard() {
   const [viewMode, setViewMode] = useState<ViewMode>('sector');
   const [selectedNode, setSelectedNode] = useState<MindMapNode | null>(null);
   const [showPortfolioList, setShowPortfolioList] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const portfolio = usePortfolioStore(state => state.portfolio);
+  const { user, logout } = useAuthStore();
 
   // 포트폴리오 데이터를 마인드맵 노드로 변환
   const mindMapData = transformPortfolioToMindMap(portfolio, viewMode);
@@ -37,6 +46,7 @@ function App() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-text-primary">MindStock</h1>
           <div className="flex items-center gap-4">
+            <span className="text-sm text-text-secondary">{user?.name}님</span>
             <button
               onClick={() => setShowPortfolioList(!showPortfolioList)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -54,6 +64,12 @@ function App() {
               API 키 설정
             </button>
             <ViewModeSelector currentMode={viewMode} onModeChange={setViewMode} />
+            <button
+              onClick={logout}
+              className="px-4 py-2 rounded-md border border-gray-200 bg-white text-sm font-medium text-text-secondary hover:bg-red-50 hover:text-red-600 transition"
+            >
+              로그아웃
+            </button>
           </div>
         </div>
       </header>
@@ -83,6 +99,25 @@ function App() {
       <NodeDetailPanel node={selectedNode} onClose={handleClosePanel} />
       <ApiKeyModal isOpen={showApiKeyModal} onClose={() => setShowApiKeyModal(false)} />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
