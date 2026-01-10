@@ -13,7 +13,7 @@ const MAX_NODE_SIZE = 80;
  * NodeSize = BaseSize * sqrt(StockValue / TotalPortfolioValue)
  * 수익률별 뷰에서는 이익율 비율에 따라 크기 조정
  */
-function calculateNodeSize(value: number, totalValue: number, profitLossRate?: number, viewMode?: 'profitLoss' | 'sector' | 'theme'): number {
+function calculateNodeSize(value: number, totalValue: number, profitLossRate?: number, viewMode?: 'profitLoss' | 'sector' | 'theme' | 'tag'): number {
   if (totalValue === 0) return MIN_NODE_SIZE;
   
   // 수익률별 뷰에서는 이익율 비율에 따라 크기 조정
@@ -37,7 +37,7 @@ function calculateNodeSize(value: number, totalValue: number, profitLossRate?: n
  * 손실 (-): Red 그라데이션 (#EF4444 ~ #DC2626)
  * 보합 (0): Neutral Gray (#9CA3AF)
  */
-export function getColorByProfitLoss(profitLossRate?: number, viewMode?: 'profitLoss' | 'sector' | 'theme'): string {
+export function getColorByProfitLoss(profitLossRate?: number, viewMode?: 'profitLoss' | 'sector' | 'theme' | 'tag'): string {
   if (profitLossRate === undefined || profitLossRate === 0) {
     return '#9CA3AF'; // Neutral Gray
   }
@@ -309,6 +309,14 @@ function transformToThemeView(portfolio: Portfolio): MindMapNode {
 }
 
 /**
+ * 태그별 뷰로 변환 (테마별과 동일한 태그 기반 분류)
+ */
+function transformToTagView(portfolio: Portfolio): MindMapNode {
+  // 현재는 테마별과 동일하게 동작하도록 유지
+  return transformToThemeView(portfolio);
+}
+
+/**
  * 포트폴리오 데이터를 마인드맵 노드 구조로 변환
  */
 export function transformPortfolioToMindMap(
@@ -322,6 +330,8 @@ export function transformPortfolioToMindMap(
       return transformToProfitLossView(portfolio);
     case 'theme':
       return transformToThemeView(portfolio);
+    case 'tag':
+      return transformToTagView(portfolio);
     default:
       return transformToSectorView(portfolio);
   }
@@ -330,6 +340,6 @@ export function transformPortfolioToMindMap(
 /**
  * 노드 크기 계산 헬퍼
  */
-export function getNodeSize(node: MindMapNode, totalValue: number, viewMode?: 'profitLoss' | 'sector' | 'theme'): number {
+export function getNodeSize(node: MindMapNode, totalValue: number, viewMode?: 'profitLoss' | 'sector' | 'theme' | 'tag'): number {
   return calculateNodeSize(node.value, totalValue, node.profitLossRate, viewMode);
 }

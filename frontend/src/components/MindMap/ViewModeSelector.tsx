@@ -17,6 +17,7 @@ export default function ViewModeSelector({
     { value: 'sector', label: '섹터별' },
     { value: 'profitLoss', label: '수익률별' },
     { value: 'theme', label: '테마별' },
+    { value: 'tag', label: '태그별' },
   ];
 
   return (

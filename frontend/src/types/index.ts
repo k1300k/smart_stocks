@@ -31,7 +31,7 @@ export interface Holding {
   profitLossRate?: number; // 손익률 (%)
 }
 
-export type ViewMode = 'sector' | 'profitLoss' | 'theme';
+export type ViewMode = 'sector' | 'profitLoss' | 'theme' | 'tag';
 
 /**
  * 마인드맵 노드 구조
