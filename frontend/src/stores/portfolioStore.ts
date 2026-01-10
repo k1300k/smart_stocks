@@ -1,8 +1,10 @@
 /**
  * 포트폴리오 상태 관리 스토어 (Zustand)
+ * localStorage에 자동 저장되어 페이지 새로고침 후에도 상태 유지
  */
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Portfolio, Holding } from '../types';
 
 interface PortfolioState {
@@ -85,92 +87,111 @@ const calculateProfitLoss = (holdings: Holding[]) => {
   );
 };
 
-export const usePortfolioStore = create<PortfolioState>((set, get) => ({
-  portfolio: {
-    id: '1',
-    userId: 'user1',
-    name: '나의 포트폴리오',
-    holdings: initialHoldings,
-    totalValue: calculateValue(initialHoldings),
-    totalProfitLoss: calculateProfitLoss(initialHoldings),
-  },
+export const usePortfolioStore = create<PortfolioState>()(
+  persist(
+    (set, get) => ({
+      portfolio: {
+        id: '1',
+        userId: 'user1',
+        name: '나의 포트폴리오',
+        holdings: initialHoldings,
+        totalValue: calculateValue(initialHoldings),
+        totalProfitLoss: calculateProfitLoss(initialHoldings),
+      },
 
-  addHolding: (holding: Holding) => {
-    set(state => {
-      const newHoldings = [...state.portfolio.holdings, holding];
-      const totalValue = calculateValue(newHoldings);
-      const totalProfitLoss = calculateProfitLoss(newHoldings);
-      return {
-        portfolio: {
-          ...state.portfolio,
-          holdings: newHoldings,
-          totalValue,
-          totalProfitLoss,
-        },
-      };
-    });
-  },
+      addHolding: (holding: Holding) => {
+        set(state => {
+          const newHoldings = [...state.portfolio.holdings, holding];
+          const totalValue = calculateValue(newHoldings);
+          const totalProfitLoss = calculateProfitLoss(newHoldings);
+          return {
+            portfolio: {
+              ...state.portfolio,
+              holdings: newHoldings,
+              totalValue,
+              totalProfitLoss,
+            },
+          };
+        });
+      },
 
-  updateHolding: (symbol: string, updates: Partial<Holding>) => {
-    set(state => {
-      const newHoldings = state.portfolio.holdings.map(h =>
-        h.symbol === symbol ? { ...h, ...updates } : h
-      );
-      const totalValue = calculateValue(newHoldings);
-      const totalProfitLoss = calculateProfitLoss(newHoldings);
-      return {
-        portfolio: {
-          ...state.portfolio,
-          holdings: newHoldings,
-          totalValue,
-          totalProfitLoss,
-        },
-      };
-    });
-  },
+      updateHolding: (symbol: string, updates: Partial<Holding>) => {
+        set(state => {
+          const newHoldings = state.portfolio.holdings.map(h =>
+            h.symbol === symbol ? { ...h, ...updates } : h
+          );
+          const totalValue = calculateValue(newHoldings);
+          const totalProfitLoss = calculateProfitLoss(newHoldings);
+          return {
+            portfolio: {
+              ...state.portfolio,
+              holdings: newHoldings,
+              totalValue,
+              totalProfitLoss,
+            },
+          };
+        });
+      },
 
-  removeHolding: (symbol: string) => {
-    set(state => {
-      const newHoldings = state.portfolio.holdings.filter(h => h.symbol !== symbol);
-      const totalValue = calculateValue(newHoldings);
-      const totalProfitLoss = calculateProfitLoss(newHoldings);
-      return {
-        portfolio: {
-          ...state.portfolio,
-          holdings: newHoldings,
-          totalValue,
-          totalProfitLoss,
-        },
-      };
-    });
-  },
+      removeHolding: (symbol: string) => {
+        set(state => {
+          const newHoldings = state.portfolio.holdings.filter(h => h.symbol !== symbol);
+          const totalValue = calculateValue(newHoldings);
+          const totalProfitLoss = calculateProfitLoss(newHoldings);
+          return {
+            portfolio: {
+              ...state.portfolio,
+              holdings: newHoldings,
+              totalValue,
+              totalProfitLoss,
+            },
+          };
+        });
+      },
 
-  setHoldings: (holdings: Holding[]) => {
-    set(state => {
-      const totalValue = calculateValue(holdings);
-      const totalProfitLoss = calculateProfitLoss(holdings);
-      return {
-        portfolio: {
-          ...state.portfolio,
-          holdings,
-          totalValue,
-          totalProfitLoss,
-        },
-      };
-    });
-  },
+      setHoldings: (holdings: Holding[]) => {
+        set(state => {
+          const totalValue = calculateValue(holdings);
+          const totalProfitLoss = calculateProfitLoss(holdings);
+          return {
+            portfolio: {
+              ...state.portfolio,
+              holdings,
+              totalValue,
+              totalProfitLoss,
+            },
+          };
+        });
+      },
 
-  updatePortfolio: (updates: Partial<Portfolio>) => {
-    set(state => ({
-      portfolio: { ...state.portfolio, ...updates },
-    }));
-  },
+      updatePortfolio: (updates: Partial<Portfolio>) => {
+        set(state => {
+          const updatedPortfolio = { ...state.portfolio, ...updates };
+          // 업데이트 후 totalValue와 totalProfitLoss 재계산
+          const totalValue = calculateValue(updatedPortfolio.holdings);
+          const totalProfitLoss = calculateProfitLoss(updatedPortfolio.holdings);
+          return {
+            portfolio: {
+              ...updatedPortfolio,
+              totalValue,
+              totalProfitLoss,
+            },
+          };
+        });
+      },
 
-  calculateTotalValue: () => {
-    return get().portfolio.totalValue;
-  },
+      calculateTotalValue: () => {
+        return get().portfolio.totalValue;
+      },
 
-  calculateTotalProfitLoss: () => {
-    return get().portfolio.totalProfitLoss;
-  },
-}));
+      calculateTotalProfitLoss: () => {
+        return get().portfolio.totalProfitLoss;
+      },
+    }),
+    {
+      name: 'mindstock-portfolio-storage', // localStorage 키 이름
+      // portfolio 객체 전체를 저장
+      partialize: (state) => ({ portfolio: state.portfolio }),
+    }
+  )
+);
