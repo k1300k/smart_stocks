@@ -25,6 +25,8 @@ export interface Holding {
   currentPriceKrw: number;
   /** 현재가 (달러) */
   currentPriceUsd: number;
+  /** 전일 대비 등락률(%) - API 조회 시 제공되며, 없을 수 있음 */
+  dayChangeRate?: number;
   sector: string;
   tags: string[];        // 사용자 정의 태그
   profitLoss?: number;   // 손익
@@ -42,6 +44,7 @@ export interface MindMapNode {
   value: number;         // 포트폴리오 가치
   profitLoss?: number;   // 손익
   profitLossRate?: number; // 손익률
+  dayChangeRate?: number; // 전일 대비 등락률(%)
   type: 'root' | 'category' | 'stock';
   children?: MindMapNode[];
   parent?: string;

@@ -3,11 +3,11 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { searchStocks, getCurrentPrice, StockSearchResult } from '../../services/stockApi';
+import { searchStocks, getCurrentPrice, StockSearchResult, StockInfo } from '../../services/stockApi';
 import { useApiKey } from '../../contexts/ApiKeyContext';
 
 interface StockSearchInputProps {
-  onSelect: (stock: StockSearchResult, currentPrice: number) => void;
+  onSelect: (stock: StockSearchResult, stockInfo: StockInfo) => void;
   disabled?: boolean;
 }
 
@@ -65,7 +65,7 @@ export default function StockSearchInput({ onSelect, disabled }: StockSearchInpu
     try {
       setIsLoading(true);
       const stockInfo = await getCurrentPrice(stock.symbol, stock.market, alphaKey || undefined);
-      onSelect(stock, stockInfo.currentPrice);
+      onSelect(stock, stockInfo);
       setQuery(stock.name);
       setShowResults(false);
     } catch (error) {

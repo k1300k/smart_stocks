@@ -36,10 +36,12 @@ export default function ExchangeRateModal({ isOpen, onClose }: ExchangeRateModal
   const handleAutoUpdate = async () => {
     setIsUpdating(true);
     try {
-      await updateRate();
-      alert('환율이 업데이트되었습니다.');
+      // 강제 업데이트 (수동 모드 우회, 시간 간격 체크 무시)
+      await updateRate(true);
+      // updateRate 내부에서 자동으로 isManualRate를 false로 설정함
     } catch (error) {
-      alert('환율 업데이트에 실패했습니다.');
+      console.error('환율 업데이트 실패:', error);
+      alert('환율 업데이트에 실패했습니다. 인터넷 연결을 확인해주세요.');
     } finally {
       setIsUpdating(false);
     }

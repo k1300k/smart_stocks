@@ -142,7 +142,13 @@ export default function MindMapView({
     node
       .append('circle')
       .attr('r', d => d.radius || 20)
-      .attr('fill', d => getColorByProfitLoss(d.profitLossRate, viewMode))
+      .attr('fill', d => {
+        // 섹터별 뷰: 전일 대비 +5% 이상 상승한 종목은 노란색 하이라이트
+        if (viewMode === 'sector' && d.type === 'stock' && typeof d.dayChangeRate === 'number' && d.dayChangeRate >= 5) {
+          return '#FBBF24'; // Amber-400
+        }
+        return getColorByProfitLoss(d.profitLossRate, viewMode);
+      })
       .attr('stroke', '#FFFFFF')
       .attr('stroke-width', 2)
       .attr('opacity', d => (selectedNode?.id === d.id ? 1 : 0.8))

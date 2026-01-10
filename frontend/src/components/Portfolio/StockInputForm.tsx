@@ -39,6 +39,7 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
     avgPriceUsd: editingHolding?.avgPriceUsd || 0,
     currentPriceKrw: editingHolding?.currentPriceKrw || 0,
     currentPriceUsd: editingHolding?.currentPriceUsd || 0,
+    dayChangeRate: editingHolding?.dayChangeRate,
     sector: editingHolding?.sector || '기타',
     tags: editingHolding?.tags || [],
   });
@@ -121,7 +122,8 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
               종목 검색 *
             </label>
             <StockSearchInput
-              onSelect={(stock, currentPrice) => {
+              onSelect={(stock, stockInfo) => {
+                const currentPrice = stockInfo.currentPrice;
                 const isKrx = stock.market === 'KRX' || /^\d{6}$/.test(stock.symbol);
                 setFormData(prev => ({
                   ...prev,
@@ -129,6 +131,7 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
                   name: stock.nameKo ? `${stock.nameKo} (${stock.name})` : stock.name,
                   currentPriceKrw: isKrx ? currentPrice : Math.round(convertUsdToKrw(currentPrice)),
                   currentPriceUsd: isKrx ? Number(convertKrwToUsd(currentPrice).toFixed(2)) : Number(currentPrice.toFixed(2)),
+                  dayChangeRate: stockInfo.changeRate,
                   sector: stock.sector || prev.sector,
                 }));
               }}
@@ -310,6 +313,7 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
                           currentPriceUsd: isKrx
                             ? Number(convertKrwToUsd(stockInfo.currentPrice).toFixed(2))
                             : Number(stockInfo.currentPrice.toFixed(2)),
+                          dayChangeRate: stockInfo.changeRate,
                         }));
                       } catch (error) {
                         alert('현재가를 가져오는 중 오류가 발생했습니다.');

@@ -34,14 +34,23 @@ function Dashboard() {
 
   // 앱 시작 시 환율 업데이트
   useEffect(() => {
-    updateRate();
+    console.log('🚀 앱 시작: 환율 자동 업데이트 초기화');
+    updateRate().catch(err => {
+      console.error('초기 환율 업데이트 실패:', err);
+    });
     
-    // 1시간마다 환율 자동 업데이트
+    // 30분마다 환율 자동 업데이트
     const interval = setInterval(() => {
-      updateRate();
-    }, 60 * 60 * 1000); // 1시간
+      console.log('⏰ 30분 경과: 환율 자동 업데이트 트리거');
+      updateRate().catch(err => {
+        console.error('주기적 환율 업데이트 실패:', err);
+      });
+    }, 30 * 60 * 1000); // 30분
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('🛑 환율 자동 업데이트 중지');
+      clearInterval(interval);
+    };
   }, [updateRate]);
 
   // 포트폴리오 데이터를 마인드맵 노드로 변환

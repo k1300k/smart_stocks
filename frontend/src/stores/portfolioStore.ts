@@ -117,6 +117,7 @@ function normalizeHolding(raw: any): Holding | null {
       avgPriceUsd: Number(raw.avgPriceUsd) || 0,
       currentPriceKrw: Number(raw.currentPriceKrw) || 0,
       currentPriceUsd: Number(raw.currentPriceUsd) || 0,
+      dayChangeRate: typeof raw.dayChangeRate === 'number' ? raw.dayChangeRate : undefined,
       sector: String(raw.sector || '기타'),
       tags: Array.isArray(raw.tags) ? raw.tags : [],
     };
@@ -146,6 +147,7 @@ function normalizeHolding(raw: any): Holding | null {
       avgPriceUsd,
       currentPriceKrw,
       currentPriceUsd,
+      dayChangeRate: typeof raw.dayChangeRate === 'number' ? raw.dayChangeRate : undefined,
       sector: String(raw.sector || '기타'),
       tags: Array.isArray(raw.tags) ? raw.tags : [],
     };
