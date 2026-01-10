@@ -170,18 +170,27 @@ export default function StockInputForm({ onClose, editingHolding }: StockInputFo
         {/* 보유 수량 */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">
-            보유 수량 *
+            보유 수량 * (소수점 6자리까지 입력 가능)
           </label>
           <input
             type="number"
             value={formData.quantity || ''}
-            onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
-            placeholder="100"
+            onChange={e => {
+              const value = e.target.value;
+              // 소수점 6자리까지 허용
+              if (value === '' || /^\d*\.?\d{0,6}$/.test(value)) {
+                setFormData({ ...formData, quantity: value === '' ? 0 : parseFloat(value) });
+              }
+            }}
+            placeholder="100 또는 0.123456"
             required
             min="0"
-            step="0.01"
+            step="0.000001"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue"
           />
+          <p className="mt-1 text-xs text-text-tertiary">
+            예: 100, 0.5, 0.123456
+          </p>
         </div>
 
         {/* 평균 매수가 */}

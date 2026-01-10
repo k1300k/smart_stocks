@@ -125,7 +125,18 @@ export default function PortfolioList() {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-text-secondary">보유 수량: </span>
-                        <span className="font-mono">{holding.quantity}주</span>
+                        <span className="font-mono">
+                          {(() => {
+                            const qty = holding.quantity;
+                            // 정수인 경우 천단위 구분자 사용
+                            if (qty % 1 === 0) {
+                              return qty.toLocaleString('ko-KR');
+                            }
+                            // 소수점이 있는 경우 소수점 6자리까지 표시하되, 끝의 불필요한 0 제거
+                            const formatted = qty.toFixed(6);
+                            return formatted.replace(/\.?0+$/, '');
+                          })()}주
+                        </span>
                       </div>
                       <div>
                         <span className="text-text-secondary">평균가: </span>
