@@ -4,7 +4,28 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
+// API Base URL 설정
+// Vercel 배포 시: 환경 변수 VITE_API_URL 사용
+// 로컬 개발 시: http://localhost:3000/api (Vite 프록시 사용)
+const getApiBaseUrl = () => {
+  // Vite 환경 변수 접근
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // 프로덕션 환경에서도 백엔드가 같은 도메인에 있지 않으면 에러 발생
+  // Vercel 배포 시 백엔드 서버가 별도로 필요함
+  if (import.meta.env.PROD) {
+    console.warn('⚠️ VITE_API_URL 환경 변수가 설정되지 않았습니다. 백엔드 서버 URL을 설정해주세요.');
+    // Vercel 배포 시 백엔드 서버 URL 필요
+    return 'http://localhost:3000/api'; // 임시값, 실제로는 백엔드 서버 URL 필요
+  }
+  
+  return 'http://localhost:3000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export interface SignupRequest {
   email: string;
