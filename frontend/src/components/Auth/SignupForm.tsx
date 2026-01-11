@@ -40,11 +40,14 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     setIsLoading(true);
 
     try {
+      console.log('회원가입 시도:', { email, password: '***', name });
       const result = await signup({ name, email, password });
+      console.log('회원가입 성공:', result);
       setAuth(result.user, result.token);
       // 회원가입 성공 후 대시보드로 이동
       navigate('/', { replace: true });
     } catch (err) {
+      console.error('회원가입 에러:', err);
       setError(err instanceof Error ? err.message : '회원가입에 실패했습니다.');
     } finally {
       setIsLoading(false);
