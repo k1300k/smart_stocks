@@ -118,11 +118,6 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         {error && (
           <div className="p-3 rounded-md bg-red-50 border border-red-200">
             <p className="text-sm text-red-600 font-medium">{error}</p>
-            {error.includes('연결할 수 없습니다') && (
-              <p className="text-xs text-red-500 mt-1 leading-relaxed">
-                팁: 로컬에서 실행 중이라면 <code className="bg-red-100 px-1 rounded">cd backend && npm run dev</code> 명령어로 백엔드 서버를 켰는지 확인해 보세요.
-              </p>
-            )}
           </div>
         )}
 

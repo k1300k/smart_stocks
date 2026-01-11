@@ -1,31 +1,6 @@
 /**
- * 인증 API 서비스
+ * 가상 인증 API 서비스 (백엔드 서버 없이 프론트엔드 단독 동작)
  */
-
-import axios from 'axios';
-
-// API Base URL 설정
-// Vercel 배포 시: 환경 변수 VITE_API_URL 사용
-// 로컬 개발 시: http://localhost:3000/api (Vite 프록시 사용)
-const getApiBaseUrl = () => {
-  // Vite 환경 변수 접근
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl) {
-    return envUrl;
-  }
-  
-  // 프로덕션 환경에서도 백엔드가 같은 도메인에 있지 않으면 에러 발생
-  // Vercel 배포 시 백엔드 서버가 별도로 필요함
-  if (import.meta.env.PROD) {
-    console.warn('⚠️ VITE_API_URL 환경 변수가 설정되지 않았습니다. 백엔드 서버 URL을 설정해주세요.');
-    // Vercel 배포 시 백엔드 서버 URL 필요
-    return 'http://localhost:3000/api'; // 임시값, 실제로는 백엔드 서버 URL 필요
-  }
-  
-  return 'http://localhost:3000/api';
-};
-
-const API_BASE_URL = getApiBaseUrl();
 
 export interface SignupRequest {
   email: string;
@@ -45,81 +20,71 @@ export interface User {
   createdAt?: string;
 }
 
-export interface AuthResponse {
-  success: boolean;
-  data: {
-    user: User;
-    token: string;
-  };
-  error?: {
-    code: string;
-    message: string;
-  };
-  timestamp: string;
-}
+// 가상 딜레이 함수 (실제 통신 느낌을 주기 위함)
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * 회원가입
+ * 가상 회원가입
  */
 export async function signup(data: SignupRequest): Promise<{ user: User; token: string }> {
-  try {
-    const response = await axios.post<AuthResponse>(
-      `${API_BASE_URL}/auth/signup`,
-      data
-    );
+  await delay(500); // 0.5초 대기
 
-    if (response.data.success && response.data.data) {
-      return response.data.data;
-    }
+  const newUser: User = {
+    id: `user_${Date.now()}`,
+    email: data.email,
+    name: data.name,
+    createdAt: new Date().toISOString(),
+  };
 
-    throw new Error(response.data.error?.message || '회원가입에 실패했습니다.');
-  } catch (error) {
-    if (axios.isAxiosError(error) && !error.response) {
-      throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요 (localhost:3000)');
-    }
-    throw error;
-  }
+  // 브라우저 로컬 스토리지에 가짜 유저 정보 저장
+  const mockUsers = JSON.parse(localStorage.getItem('mock_users') || '[]');
+  mockUsers.push({ ...newUser, password: data.password });
+  localStorage.setItem('mock_users', JSON.stringify(mockUsers));
+
+  return {
+    user: newUser,
+    token: `mock_token_${Date.now()}`,
+  };
 }
 
 /**
- * 로그인
+ * 가상 로그인
  */
 export async function login(data: LoginRequest): Promise<{ user: User; token: string }> {
-  try {
-    const response = await axios.post<AuthResponse>(
-      `${API_BASE_URL}/auth/login`,
-      data
-    );
+  await delay(500);
 
-    if (response.data.success && response.data.data) {
-      return response.data.data;
-    }
+  // 로컬 스토리지에서 유저 확인
+  const mockUsers = JSON.parse(localStorage.getItem('mock_users') || '[]');
+  const user = mockUsers.find((u: any) => u.email === data.email);
 
-    throw new Error(response.data.error?.message || '로그인에 실패했습니다.');
-  } catch (error) {
-    if (axios.isAxiosError(error) && !error.response) {
-      throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요 (localhost:3000)');
-    }
-    throw error;
+  if (user && user.password === data.password) {
+    return {
+      user: { id: user.id, email: user.email, name: user.name },
+      token: `mock_token_${Date.now()}`,
+    };
   }
+
+  // 계정이 없거나 비밀번호가 틀려도 즉석에서 로그인시켜줌 (간편 모드)
+  const instantUser: User = {
+    id: `user_${Date.now()}`,
+    email: data.email,
+    name: data.email.split('@')[0], // 이메일 앞부분을 이름으로 사용
+  };
+
+  return {
+    user: instantUser,
+    token: `mock_token_${Date.now()}`,
+  };
 }
 
 /**
- * 토큰 검증
+ * 가상 토큰 검증
  */
-export async function verifyToken(token: string): Promise<User> {
-  const response = await axios.get<AuthResponse>(
-    `${API_BASE_URL}/auth/verify`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  if (response.data.success && response.data.data?.user) {
-    return response.data.data.user;
-  }
-
-  throw new Error(response.data.error?.message || '토큰 검증에 실패했습니다.');
+export async function verifyToken(_token: string): Promise<User> {
+  await delay(100);
+  return {
+    id: 'mock_user',
+    email: 'test@example.com',
+    name: '테스트 유저',
+  };
 }
