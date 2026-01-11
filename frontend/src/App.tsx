@@ -11,16 +11,9 @@ import PortfolioList from './components/Portfolio/PortfolioList';
 import { ViewMode, MindMapNode } from './types';
 import { transformPortfolioToMindMap } from './services/portfolioTransform';
 import { usePortfolioStore } from './stores/portfolioStore';
-import { useAuthStore } from './stores/authStore';
 import { useExchangeRateStore } from './stores/exchangeRateStore';
 import ApiKeyModal from './components/Settings/ApiKeyModal';
 import ExchangeRateModal from './components/Settings/ExchangeRateModal';
-import AuthPage from './pages/AuthPage';
-
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/auth" replace />;
-}
 
 function Dashboard() {
   const [viewMode, setViewMode] = useState<ViewMode>('sector');
@@ -29,7 +22,6 @@ function Dashboard() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showExchangeRateModal, setShowExchangeRateModal] = useState(false);
   const portfolio = usePortfolioStore(state => state.portfolio);
-  const { user, logout } = useAuthStore();
   const { updateRate } = useExchangeRateStore();
 
   // 앱 시작 시 환율 업데이트
@@ -71,7 +63,6 @@ function Dashboard() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-text-primary">MindStock</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-text-secondary">{user?.name}님</span>
             <button
               onClick={() => setShowPortfolioList(!showPortfolioList)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -95,12 +86,6 @@ function Dashboard() {
               환율 설정
             </button>
             <ViewModeSelector currentMode={viewMode} onModeChange={setViewMode} />
-            <button
-              onClick={logout}
-              className="px-4 py-2 rounded-md border border-gray-200 bg-white text-sm font-medium text-text-secondary hover:bg-red-50 hover:text-red-600 transition"
-            >
-              로그아웃
-            </button>
           </div>
         </div>
       </header>
@@ -138,15 +123,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/auth" element={<AuthPage />} />
-        <Route
-          path="/"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
+        <Route path="/" element={<Dashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
