@@ -25,11 +25,14 @@ export default function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     setIsLoading(true);
 
     try {
+      console.log('로그인 시도:', { email, password: '***' });
       const result = await login({ email, password });
+      console.log('로그인 성공:', result);
       setAuth(result.user, result.token);
       // 로그인 성공 후 대시보드로 이동
       navigate('/', { replace: true });
     } catch (err) {
+      console.error('로그인 에러:', err);
       setError(err instanceof Error ? err.message : '로그인에 실패했습니다.');
     } finally {
       setIsLoading(false);
