@@ -62,32 +62,46 @@ export interface AuthResponse {
  * 회원가입
  */
 export async function signup(data: SignupRequest): Promise<{ user: User; token: string }> {
-  const response = await axios.post<AuthResponse>(
-    `${API_BASE_URL}/auth/signup`,
-    data
-  );
+  try {
+    const response = await axios.post<AuthResponse>(
+      `${API_BASE_URL}/auth/signup`,
+      data
+    );
 
-  if (response.data.success && response.data.data) {
-    return response.data.data;
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+
+    throw new Error(response.data.error?.message || '회원가입에 실패했습니다.');
+  } catch (error) {
+    if (axios.isAxiosError(error) && !error.response) {
+      throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요 (localhost:3000)');
+    }
+    throw error;
   }
-
-  throw new Error(response.data.error?.message || '회원가입에 실패했습니다.');
 }
 
 /**
  * 로그인
  */
 export async function login(data: LoginRequest): Promise<{ user: User; token: string }> {
-  const response = await axios.post<AuthResponse>(
-    `${API_BASE_URL}/auth/login`,
-    data
-  );
+  try {
+    const response = await axios.post<AuthResponse>(
+      `${API_BASE_URL}/auth/login`,
+      data
+    );
 
-  if (response.data.success && response.data.data) {
-    return response.data.data;
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+
+    throw new Error(response.data.error?.message || '로그인에 실패했습니다.');
+  } catch (error) {
+    if (axios.isAxiosError(error) && !error.response) {
+      throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요 (localhost:3000)');
+    }
+    throw error;
   }
-
-  throw new Error(response.data.error?.message || '로그인에 실패했습니다.');
 }
 
 /**
